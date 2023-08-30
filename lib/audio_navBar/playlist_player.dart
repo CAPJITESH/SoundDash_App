@@ -53,7 +53,7 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
     for (final item in widget.playlistData) {
       playlistItems.add(
         Audio.network(
-          item['downloadUrl'][2]
+          item['downloadUrl'][4]
               ['link'], // Assuming downloadUrl is a list
           metas: Metas(
             title: item['name'],

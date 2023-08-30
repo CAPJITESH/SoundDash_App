@@ -1,7 +1,7 @@
 import 'package:SoundDash/audio_navBar/bottom_song_player.dart';
 import 'package:SoundDash/audio_navBar/playlist_player.dart';
 import 'package:SoundDash/pages/home.dart';
-import 'package:SoundDash/pages/join.dart';
+import 'package:SoundDash/pages/internal_songs.dart';
 import 'package:SoundDash/pages/library.dart';
 import 'package:SoundDash/pages/search.dart';
 import 'package:SoundDash/services/selected_song_data.dart';
@@ -53,7 +53,7 @@ class _NavbarState extends State<Navbar> {
             ),
             renderView(
               2,
-              const Join(),
+              const InternalSongs(),
             ),
             renderView(
               3,
@@ -81,7 +81,7 @@ class _NavbarState extends State<Navbar> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.library_music),
-            label: "Join",
+            label: "Internal",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.library_music_outlined),

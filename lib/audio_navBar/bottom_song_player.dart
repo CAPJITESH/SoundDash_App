@@ -1,7 +1,8 @@
 import 'package:SoundDash/api/song_api.dart';
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:flutter/material.dart';
-
+import 'package:flutter_file_downloader/flutter_file_downloader.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class BottomSongPlayer extends StatefulWidget {
   final Map<String, dynamic> songData;
@@ -34,6 +35,13 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
         _totalDurationNotifier.value = playing.audio!.duration!;
       }
     });
+
+    audioPlayer.onReadyToPlay.listen((audioInfo) {
+      if (audioPlayer.readingPlaylist!.currentIndex ==
+          audioPlayer.playlist!.audios.length - 1) {
+        addMoreSongs();
+      }
+    });
   }
 
   @override
@@ -49,7 +57,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
   void setupPlaylist() async {
     // Add the initial song to the playlist
     final Audio initialSong = Audio.network(
-      widget.songData['downloadUrl'][2]['link'],
+      widget.songData['downloadUrl'][4]['link'],
       metas: Metas(
         title: widget.songData['name'],
         artist: widget.songData['primaryArtists'],
@@ -72,7 +80,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
     // Create a list of Audio items for the additional songs
     additionalSongs = playlistData.map((item) {
       return Audio.network(
-        item['data'][0]['downloadUrl'][2]['link'],
+        item['data'][0]['downloadUrl'][4]['link'],
         metas: Metas(
           title: item['data'][0]['name'],
           artist: item['data'][0]['primaryArtists'],
@@ -89,6 +97,34 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
     setState(() {
       gotPlaylistData = true;
     });
+  }
+
+  addMoreSongs() async {
+    List<Audio> songsList = [];
+    List<Map<String, dynamic>> SongsDataFromApi = [];
+
+    String lastSongId = playlistData[playlistData.length - 1]['data'][0]['id'];
+
+    SongsDataFromApi = await Api.getReco(lastSongId);
+
+    songsList = SongsDataFromApi.map((item) {
+      return Audio.network(
+        item['data'][0]['downloadUrl'][2]['link'],
+        metas: Metas(
+          title: item['data'][0]['name'],
+          artist: item['data'][0]['primaryArtists'],
+          album: item['data'][0]['album']['name'],
+          image: MetasImage.network(item['data'][0]['image'][2]['link']),
+        ),
+      );
+    }).toList();
+
+    playlistData.addAll(SongsDataFromApi);
+
+    int len = audioPlayer.playlist!.audios.length;
+    for (int i = 0; i < songsList.length; i++) {
+      audioPlayer.playlist!.insert(i + len, songsList[i]);
+    }
   }
 
   playMusic() async {
@@ -131,6 +167,29 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
     setState(() {
       isExpanded = !isExpanded;
     });
+  }
+
+  Future<void> download_song() async {
+    try {
+      var status = await Permission.storage.request();
+      if (status.isGranted) {
+        print(audioPlayer.readingPlaylist!.current.path);
+        print(widget.songData['downloadUrl'][4]['link']);
+        FileDownloader.downloadFile(
+            url: audioPlayer.readingPlaylist!.current.path,
+            name: '${audioPlayer.getCurrentAudioTitle}.mp3',
+            onDownloadCompleted: (String path) {
+              print('FILE DOWNLOADED TO PATH: $path');
+            },
+            onDownloadError: (String error) {
+              print('DOWNLOAD ERROR: $error');
+            });
+      } else {
+        print('Permission denied');
+      }
+    } catch (e) {
+      print('Error downloading audio: $e');
+    }
   }
 
   @override
@@ -542,13 +601,26 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                   ),
                 ],
               ),
-              if (gotPlaylistData)
-                ElevatedButton(
-                  onPressed: () {
-                    _showBottomSheet(context);
-                  },
-                  child: Text('Next in Queue'),
+              Center(
+                child: Row(
+                  children: [
+                    if (gotPlaylistData)
+                      ElevatedButton(
+                        onPressed: () {
+                          _showBottomSheet(context);
+                        },
+                        child: Text('Next in Queue'),
+                      ),
+                    IconButton(
+                      onPressed: () {
+                        download_song();
+                      },
+                      icon: Icon(Icons.download_rounded),
+                      iconSize: 50,
+                    )
+                  ],
                 ),
+              ),
             ],
           ),
         ),
