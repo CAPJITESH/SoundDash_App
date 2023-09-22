@@ -1,4 +1,5 @@
 import 'package:SoundDash/api/song_api.dart';
+import 'package:SoundDash/services/database.dart';
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_file_downloader/flutter_file_downloader.dart';
@@ -22,6 +23,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
 
   List<Audio> additionalSongs = [];
   List<Map<String, dynamic>> playlistData = [];
+  bool favourite = false;
 
   @override
   void initState() {
@@ -36,7 +38,30 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
       }
     });
 
+    audioPlayer.current.listen((playing) {
+      Map<String, dynamic> currentPlayingSong = {};
+
+      if (playing != null && playing.audio != null) {
+        currentPlayingSong = {
+          'id': playing.audio!.audio!.metas.id,
+          'title': playing.audio!.audio!.metas.title,
+          'artist': playing.audio!.audio!.metas.artist,
+          'album': playing.audio!.audio!.metas.album,
+          'image': playing.audio!.audio.metas.image?.path,
+          'audio': playing.audio!.audio.path
+        };
+        DatabaseService db = DatabaseService();
+
+        db.addInHistory(currentPlayingSong);
+
+        setState(() {
+          favourite = db.isFav(currentPlayingSong) as bool;
+        });
+      }
+    });
+
     audioPlayer.onReadyToPlay.listen((audioInfo) {
+      favChecker();
       if (audioPlayer.readingPlaylist!.currentIndex ==
           audioPlayer.playlist!.audios.length - 1) {
         addMoreSongs();
@@ -59,6 +84,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
     final Audio initialSong = Audio.network(
       widget.songData['downloadUrl'][4]['link'],
       metas: Metas(
+        id: widget.songData['id'],
         title: widget.songData['name'],
         artist: widget.songData['primaryArtists'],
         album: widget.songData['album']['name'],
@@ -74,14 +100,13 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
       headPhoneStrategy: HeadPhoneStrategy.pauseOnUnplug,
     );
 
-    // Fetch data from the API and retrieve the additional songs
     playlistData = await Api.getReco(widget.songData['id']);
 
-    // Create a list of Audio items for the additional songs
     additionalSongs = playlistData.map((item) {
       return Audio.network(
         item['data'][0]['downloadUrl'][4]['link'],
         metas: Metas(
+          id: item['data'][0]['id'],
           title: item['data'][0]['name'],
           artist: item['data'][0]['primaryArtists'],
           album: item['data'][0]['album']['name'],
@@ -169,6 +194,52 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
     });
   }
 
+  void favChecker() async {
+    favourite = false;
+    audioPlayer.current.listen((playing) async {
+      Map<String, dynamic> current = {};
+
+      current = {
+        'id': playing?.audio.audio.metas.id,
+        'title': playing?.audio.audio.metas.title,
+        'artist': playing?.audio.audio.metas.artist,
+        'album': playing?.audio.audio.metas.album,
+        'image': playing?.audio.audio.metas.image?.path,
+        'audio': playing?.audio.audio.path
+      };
+      DatabaseService db = DatabaseService();
+
+      bool res = await db.isFav(current);
+
+      setState(() {
+        favourite = res;
+      });
+    });
+  }
+
+  void favChanger() async {
+    audioPlayer.current.listen((playing) async {
+      Map<String, dynamic> current = {};
+
+      current = {
+        'id': playing?.audio.audio.metas.id,
+        'title': playing?.audio.audio.metas.title,
+        'artist': playing?.audio.audio.metas.artist,
+        'album': playing?.audio.audio.metas.album,
+        'image': playing?.audio.audio.metas.image?.path,
+        'audio': playing?.audio.audio.path
+      };
+      DatabaseService db = DatabaseService();
+      print(favourite);
+      await db.addRemoveFav(current, favourite);
+
+      // Move setState inside the listen callback
+      setState(() {
+        favourite = !favourite;
+      });
+    });
+  }
+
   Future<void> download_song() async {
     try {
       var status = await Permission.storage.request();
@@ -195,7 +266,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      duration: Duration(seconds: 5),
+      duration: const Duration(seconds: 5),
       height: isExpanded ? MediaQuery.of(context).size.height : null,
       curve: Curves.ease,
       child: isExpanded ? buildExpandedView() : buildCollapsedView(),
@@ -281,7 +352,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
                                 Container(
-                                  width: 100,
+                                  width: 80,
                                   child: Text(
                                     metas?.title ?? '',
                                     style: const TextStyle(
@@ -293,11 +364,13 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                                   ),
                                 ),
                                 Container(
-                                  width: 130,
+                                  width: 80,
                                   child: Text(
                                     metas?.artist ?? '',
                                     style: const TextStyle(
-                                        fontSize: 14, color: Colors.white),
+                                        fontSize: 13,
+                                        color:
+                                            Color.fromARGB(255, 139, 139, 139)),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -337,6 +410,19 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                       icon: const Icon(Icons.skip_next_rounded),
                       onPressed: () => skipNext(),
                     ),
+
+                    IconButton(
+                        onPressed: () {
+                          favChanger();
+                        },
+                        icon: favourite
+                            ? const Icon(
+                                Icons.favorite_rounded,
+                                color: Colors.red,
+                              )
+                            : const Icon(
+                                Icons.favorite_border_rounded,
+                              ))
                   ],
                 ),
                 // const SizedBox(height: 10),
@@ -369,12 +455,12 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
               builder:
                   (BuildContext context, ScrollController scrollController) {
                 return Container(
-                  color: Color.fromARGB(0, 163, 163, 163),
+                  color: const Color.fromARGB(0, 163, 163, 163),
                   child: Column(
                     children: [
                       Container(
                         width: MediaQuery.of(context).size.width,
-                        padding: EdgeInsets.only(top: 25, bottom: 8),
+                        padding: const EdgeInsets.only(top: 25, bottom: 8),
                         child: const Center(
                           child: Text(
                             "Next in Queue",
@@ -450,7 +536,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                                               color: primaryArtists ==
                                                           playingArtists &&
                                                       title == playingTitle
-                                                  ? Color.fromARGB(
+                                                  ? const Color.fromARGB(
                                                       255, 72, 255, 0)
                                                   : Colors.white),
                                           maxLines: 2,
@@ -462,7 +548,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                                               color: primaryArtists ==
                                                           playingArtists &&
                                                       title == playingTitle
-                                                  ? Color.fromARGB(
+                                                  ? const Color.fromARGB(
                                                       255, 72, 255, 0)
                                                   : Colors.white),
                                           maxLines: 1,
@@ -527,22 +613,22 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                         width: 200,
                         height: 200,
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
                       Text(
                         metas?.title ?? '', // Use the current song's title
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                       Text(
                         metas?.artist ?? '', // Use the current song's artist
-                        style: TextStyle(fontSize: 16),
+                        style: const TextStyle(fontSize: 16),
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
                     ],
                   );
                 },
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ValueListenableBuilder<Duration>(
                 valueListenable: _currentPositionNotifier,
                 builder: (context, position, _) {
@@ -556,7 +642,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                   );
                 },
               ),
-              SizedBox(height: 5),
+              const SizedBox(height: 5),
               ValueListenableBuilder<Duration>(
                 valueListenable: _currentPositionNotifier,
                 builder: (context, position, _) {
@@ -575,7 +661,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                 children: [
                   IconButton(
                     iconSize: 50,
-                    icon: Icon(Icons.skip_previous_rounded),
+                    icon: const Icon(Icons.skip_previous_rounded),
                     onPressed: () => skipPrevious(),
                   ),
                   StreamBuilder<bool>(
@@ -596,7 +682,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                   IconButton(
                     iconSize: 50,
                     color: gotPlaylistData ? Colors.white : Colors.grey[500],
-                    icon: Icon(Icons.skip_next_rounded),
+                    icon: const Icon(Icons.skip_next_rounded),
                     onPressed: () => skipNext(),
                   ),
                 ],
@@ -609,13 +695,13 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                         onPressed: () {
                           _showBottomSheet(context);
                         },
-                        child: Text('Next in Queue'),
+                        child: const Text('Next in Queue'),
                       ),
                     IconButton(
                       onPressed: () {
                         download_song();
                       },
-                      icon: Icon(Icons.download_rounded),
+                      icon: const Icon(Icons.download_rounded),
                       iconSize: 50,
                     )
                   ],

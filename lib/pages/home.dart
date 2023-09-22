@@ -1,7 +1,9 @@
+import 'package:SoundDash/Auth/auth.dart';
 import 'package:SoundDash/api/song_api.dart';
 import 'package:SoundDash/cards/album_card_home.dart';
 import 'package:SoundDash/pages/playlist_view.dart';
 import 'package:SoundDash/services/selected_song_data.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -37,6 +39,9 @@ class _HomeState extends State<Home> {
     });
   }
 
+  String nameOfUser = FirebaseAuth.instance.currentUser?.displayName ?? '';
+  AuthService auth = AuthService();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -63,6 +68,9 @@ class _HomeState extends State<Home> {
                     const SizedBox(
                       height: 50,
                     ),
+                    ElevatedButton(
+                        onPressed: auth.HandleGoogleSignOut,
+                        child: const Text('SignOut')),
                     Container(
                       width: MediaQuery.of(context).size.width,
                       // color: Colors.white,
@@ -76,8 +84,8 @@ class _HomeState extends State<Home> {
                     ),
                     Container(
                       width: MediaQuery.of(context).size.width,
-                      child: const Text(
-                        "Let's Vibe",
+                      child: Text(
+                        "Let's Vibe $nameOfUser",
                         style: TextStyle(
                             fontSize: 25,
                             color: Color.fromARGB(255, 234, 234, 234)),

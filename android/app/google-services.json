@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "107313168771",
+    "project_id": "sounddash-6f799",
+    "storage_bucket": "sounddash-6f799.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:107313168771:android:ab682762f911d67282f6b6",
+        "android_client_info": {
+          "package_name": "com.example.sound_dash"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbdWUFywtrTDFrnHOncIqweIol3KJvA1M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
