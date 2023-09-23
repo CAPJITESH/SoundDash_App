@@ -1,8 +1,11 @@
 import 'package:SoundDash/Auth/auth.dart';
 import 'package:SoundDash/api/song_api.dart';
 import 'package:SoundDash/cards/album_card_home.dart';
+import 'package:SoundDash/cards/fav_card_home.dart';
 import 'package:SoundDash/pages/playlist_view.dart';
+import 'package:SoundDash/services/database.dart';
 import 'package:SoundDash/services/selected_song_data.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -50,15 +53,15 @@ class _HomeState extends State<Home> {
           children: [
             SingleChildScrollView(
               child: Container(
-                padding: EdgeInsets.only(left: 10),
+                padding: const EdgeInsets.only(left: 10),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Color.fromARGB(255, 70, 1, 50),
-                      Color.fromARGB(255, 50, 1, 40),
-                      Color.fromARGB(255, 10, 1, 20),
+                      const Color.fromARGB(255, 70, 1, 50),
+                      const Color.fromARGB(255, 50, 1, 40),
+                      const Color.fromARGB(255, 10, 1, 20),
                       Colors.black.withOpacity(1),
                     ],
                   ),
@@ -66,7 +69,7 @@ class _HomeState extends State<Home> {
                 child: Column(
                   children: [
                     const SizedBox(
-                      height: 50,
+                      height: 30,
                     ),
                     ElevatedButton(
                         onPressed: auth.HandleGoogleSignOut,
@@ -86,11 +89,71 @@ class _HomeState extends State<Home> {
                       width: MediaQuery.of(context).size.width,
                       child: Text(
                         "Let's Vibe $nameOfUser",
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontSize: 25,
                             color: Color.fromARGB(255, 234, 234, 234)),
                       ),
                     ),
+
+                    const SizedBox(
+                      height: 20,
+                    ),
+
+                    StreamBuilder<QuerySnapshot>(
+                      stream: DatabaseService().getFavStream(),
+                      builder: (BuildContext context,
+                          AsyncSnapshot<QuerySnapshot> snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+
+                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                          return Container(); // Return an empty container if there are no favorites
+                        }
+
+                        return Column(
+                          children: [
+                            Container(
+                              width: MediaQuery.of(context).size.width,
+                              child: const Text(
+                                'Favorites',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  color: Color.fromARGB(255, 219, 172, 255),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 5,
+                            ),
+                            Container(
+                              height: 135,
+                              child: GridView(
+                                scrollDirection: Axis.horizontal,
+                                gridDelegate:
+                                    const SliverGridDelegateWithMaxCrossAxisExtent(
+                                  maxCrossAxisExtent: 100,
+                                  childAspectRatio: 0.35,
+                                  crossAxisSpacing: 4,
+                                  mainAxisSpacing: 4,
+                                ),
+                                children: [
+                                  for (var doc in snapshot.data!.docs)
+                                    if (doc.data() != null)
+                                      FavouriteCard(
+                                          data: doc.data()
+                                              as Map<String, dynamic>),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+
                     FutureBuilder<Map<String, dynamic>>(
                       future: fetchApiResponse(),
                       builder: (context, snapshot) {
@@ -106,8 +169,8 @@ class _HomeState extends State<Home> {
                                 children: [
                                   Container(
                                     width: MediaQuery.of(context).size.width,
-                                    padding:
-                                        EdgeInsets.only(top: 25, bottom: 8),
+                                    padding: const EdgeInsets.only(
+                                        top: 25, bottom: 8),
                                     child: Text(
                                       sectionTitle,
                                       style: const TextStyle(
@@ -140,7 +203,7 @@ class _HomeState extends State<Home> {
                         } else if (snapshot.hasError) {
                           return Text('Error: ${snapshot.error}');
                         } else {
-                          return CircularProgressIndicator();
+                          return const CircularProgressIndicator();
                         }
                       },
                     ),

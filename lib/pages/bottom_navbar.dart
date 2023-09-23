@@ -1,4 +1,4 @@
-import 'package:SoundDash/audio_navBar/bottom_song_player.dart';
+import 'package:SoundDash/audio_navBar/song_player.dart';
 import 'package:SoundDash/audio_navBar/playlist_player.dart';
 import 'package:SoundDash/pages/home.dart';
 import 'package:SoundDash/pages/internal_songs.dart';

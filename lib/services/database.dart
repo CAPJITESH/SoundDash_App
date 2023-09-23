@@ -34,17 +34,16 @@ class DatabaseService {
         .snapshots();
   }
 
-  Future<bool> isFav(Map<String, dynamic> songData) async{
+  Future<bool> isFav(Map<String, dynamic> songData) async {
     QuerySnapshot<Map<String, dynamic>> querySnapshot = await usersCollection
-          .doc(uid)
-          .collection('favourite')
-          .where('title', isEqualTo: songData['title'])
-          .get();
+        .doc(uid)
+        .collection('favourite')
+        .where('title', isEqualTo: songData['title'])
+        .get();
 
-      if (querySnapshot.docs.isNotEmpty) {
-        return true;
-        }
-    else {
+    if (querySnapshot.docs.isNotEmpty) {
+      return true;
+    } else {
       return false;
     }
   }
@@ -65,8 +64,16 @@ class DatabaseService {
         }
       }
     } else {
+      songData['timestamp'] = FieldValue.serverTimestamp();
       await usersCollection.doc(uid).collection('favourite').add(songData);
-
     }
+  }
+
+  Stream<QuerySnapshot> getFavStream() {
+    return usersCollection
+        .doc(uid)
+        .collection('favourite')
+        .orderBy('timestamp', descending: true)
+        .snapshots();
   }
 }
