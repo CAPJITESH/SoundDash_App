@@ -44,6 +44,13 @@ dependencies:
   firebase_core: ^2.16.0
   google_sign_in: ^6.1.5
   flutter_spinkit: ^5.2.0
+  flip_card: ^0.7.0
+  just_audio: ^0.9.34
+  just_audio_background: ^0.0.1-beta.10
+  audio_service: ^0.18.10
+  # metadata_god: ^0.5.0
+  # flutter_rust_bridge: ^1.82.1
+  
 
 
   

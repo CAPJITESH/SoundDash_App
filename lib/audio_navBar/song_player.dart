@@ -1,12 +1,13 @@
-import 'dart:async';
-
 import 'package:SoundDash/api/song_api.dart';
 import 'package:SoundDash/services/database.dart';
+import 'package:SoundDash/services/get_lyrics.dart';
 import 'package:assets_audio_player/assets_audio_player.dart';
+import 'package:flip_card/flip_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_file_downloader/flutter_file_downloader.dart';
 
 import 'package:permission_handler/permission_handler.dart';
+// import 'package:metadata_god/metadata_god.dart';
 
 class BottomSongPlayer extends StatefulWidget {
   final Map<String, dynamic> songData;
@@ -37,7 +38,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
     });
     audioPlayer.current.listen((playing) {
       if (playing != null) {
-        _totalDurationNotifier.value = playing.audio!.duration!;
+        _totalDurationNotifier.value = playing.audio.duration;
       }
     });
 
@@ -46,12 +47,13 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
 
       if (playing != null) {
         currentPlayingSong = {
-          'id': playing.audio!.audio!.metas.id,
-          'title': playing.audio!.audio!.metas.title,
-          'artist': playing.audio!.audio!.metas.artist,
-          'album': playing.audio!.audio!.metas.album,
-          'image': playing.audio!.audio.metas.image?.path,
-          'audio': playing.audio!.audio.path
+          'id': playing.audio.audio.metas.id,
+          'title': playing.audio.audio.metas.title,
+          'artist': playing.audio.audio.metas.artist,
+          'album': playing.audio.audio.metas.album,
+          'image': playing.audio.audio.metas.image?.path,
+          'audio': playing.audio.audio.path,
+          'songData': playing.audio.audio.metas.extra
         };
         DatabaseService db = DatabaseService();
 
@@ -92,6 +94,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
         artist: widget.songData['primaryArtists'],
         album: widget.songData['album']['name'],
         image: MetasImage.network(widget.songData['image'][2]['link']),
+        extra: widget.songData
       ),
     );
 
@@ -114,6 +117,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
           artist: item['data'][0]['primaryArtists'],
           album: item['data'][0]['album']['name'],
           image: MetasImage.network(item['data'][0]['image'][2]['link']),
+          extra: item['data'][0]
         ),
       );
     }).toList();
@@ -139,10 +143,12 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
       return Audio.network(
         item['data'][0]['downloadUrl'][2]['link'],
         metas: Metas(
+          id: item['data'][0]['id'],
           title: item['data'][0]['name'],
           artist: item['data'][0]['primaryArtists'],
           album: item['data'][0]['album']['name'],
           image: MetasImage.network(item['data'][0]['image'][2]['link']),
+          extra: item['data'][0]
         ),
       );
     }).toList();
@@ -208,7 +214,8 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
       'artist': audioPlayer.current.value?.audio.audio.metas.artist,
       'album': audioPlayer.current.value?.audio.audio.metas.album,
       'image': audioPlayer.current.value?.audio.audio.metas.image?.path,
-      'audio': audioPlayer.current.value?.audio.audio.path
+      'audio': audioPlayer.current.value?.audio.audio.path,
+      'songData': audioPlayer.current.value?.audio.audio.metas.extra
     };
     DatabaseService db = DatabaseService();
 
@@ -226,7 +233,8 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
       'artist': audioPlayer.current.value?.audio.audio.metas.artist,
       'album': audioPlayer.current.value?.audio.audio.metas.album,
       'image': audioPlayer.current.value?.audio.audio.metas.image?.path,
-      'audio': audioPlayer.current.value?.audio.audio.path
+      'audio': audioPlayer.current.value?.audio.audio.path,
+      'songData': audioPlayer.current.value?.audio.audio.metas.extra
     };
 
     DatabaseService db = DatabaseService();
@@ -245,10 +253,29 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
         FileDownloader.downloadFile(
             url: audioPlayer.readingPlaylist!.current.path,
             name: '${audioPlayer.getCurrentAudioTitle}.mp3',
-            onDownloadCompleted: (String path) {
+            onDownloadCompleted: (String path) async {
               print('FILE DOWNLOADED TO PATH: $path');
 
               String temp = "${audioPlayer.getCurrentAudioTitle} is Downloaded";
+
+              //     await MetadataGod.writeMetadata(
+              //   file: path,
+              //   metadata: Metadata(
+              //     title: audioPlayer.current.value?.audio.audio.metas.title,
+              //     artist: audioPlayer.current.value?.audio.audio.metas.artist,
+              //     album: audioPlayer.current.value?.audio.audio.metas.album,
+              //     // lyrics: lyrics,
+              //     // comment: 'BlackHole',
+              //     // trackNumber: 1,
+              //     // trackTotal: 12,
+              //     // discNumber: 1,
+              //     // discTotal: 5,
+              //     picture: Picture(
+              //       data: File(audioPlayer.current.value?.audio.audio.metas.image!.path as String).readAsBytesSync(),
+              //       mimeType: 'image/jpeg',
+              //     ),
+              //   ),
+              // );
 
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 backgroundColor: Colors.black,
@@ -256,7 +283,6 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(70)),
                 behavior: SnackBarBehavior.floating,
-                
                 duration: const Duration(seconds: 2),
                 content: Text(
                   temp,
@@ -340,7 +366,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                       builder: (context, snapshot) {
                         final playing = snapshot.data;
                         final audio = playing?.audio;
-                        final metas = audio?.audio?.metas;
+                        final metas = audio?.audio.metas;
                         return Row(
                           children: [
                             Padding(
@@ -591,6 +617,8 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
     );
   }
 
+  GlobalKey<FlipCardState> cardKey = GlobalKey<FlipCardState>();
+
   Widget buildExpandedView() {
     return WillPopScope(
       onWillPop: () async {
@@ -617,16 +645,33 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                 builder: (context, snapshot) {
                   final playing = snapshot.data;
                   final audio = playing?.audio;
-                  final metas = audio?.audio?.metas;
+                  final metas = audio?.audio.metas;
                   return Column(
                     children: [
-                      Image.network(
-                        metas?.image?.path ??
-                            '', // Use the current song's image path
-                        width: 200,
-                        height: 200,
+                      ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              print(audioPlayer
+                                  .current.value?.audio.audio.metas.id);
+
+                              cardKey.currentState!.toggleCard();
+                            });
+                          },
+                          child: Text('show lyrics')),
+                      FlipCard(
+                        fill: Fill.fillBack,
+                        key: cardKey,
+                        direction: FlipDirection.HORIZONTAL,
+                        side: CardSide.FRONT,
+                        front: Image.network(
+                          metas?.image?.path ??
+                              '', // Use the current song's image path
+                          width: 250,
+                          height: 250,
+                        ),
+                        back: GetLyrics(id: audioPlayer.current.value?.audio.audio.metas.id as String),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 10),
                       Text(
                         metas?.title ?? '', // Use the current song's title
                         style: const TextStyle(
@@ -636,12 +681,12 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                         metas?.artist ?? '', // Use the current song's artist
                         style: const TextStyle(fontSize: 16),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 10),
                     ],
                   );
                 },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
               ValueListenableBuilder<Duration>(
                 valueListenable: _currentPositionNotifier,
                 builder: (context, position, _) {
@@ -700,16 +745,16 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                   ),
                 ],
               ),
+              if (gotPlaylistData)
+                ElevatedButton(
+                  onPressed: () {
+                    _showBottomSheet(context);
+                  },
+                  child: const Text('Next in Queue'),
+                ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  if (gotPlaylistData)
-                    ElevatedButton(
-                      onPressed: () {
-                        _showBottomSheet(context);
-                      },
-                      child: const Text('Next in Queue'),
-                    ),
                   IconButton(
                     onPressed: () {
                       download_song();
@@ -718,18 +763,18 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                     iconSize: 50,
                   ),
                   IconButton(
-                        onPressed: () {
-                          favChanger();
-                        },
-                        iconSize: 50,
-                        icon: favourite
-                            ? const Icon(
-                                Icons.favorite_rounded,
-                                color: Colors.red,
-                              )
-                            : const Icon(
-                                Icons.favorite_border_rounded,
-                              ))
+                      onPressed: () {
+                        favChanger();
+                      },
+                      iconSize: 50,
+                      icon: favourite
+                          ? const Icon(
+                              Icons.favorite_rounded,
+                              color: Colors.red,
+                            )
+                          : const Icon(
+                              Icons.favorite_border_rounded,
+                            ))
                 ],
               ),
             ],

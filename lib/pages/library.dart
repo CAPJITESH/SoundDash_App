@@ -1,6 +1,8 @@
+import 'package:SoundDash/services/selected_song_data.dart';
 import 'package:flutter/material.dart';
 import 'package:SoundDash/services/database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 
 class Library extends StatefulWidget {
   const Library({super.key});
@@ -12,6 +14,9 @@ class Library extends StatefulWidget {
 class _LibraryState extends State<Library> {
   @override
   Widget build(BuildContext context) {
+    final selectedSongDataProvider =
+        Provider.of<SelectedSongDataProvider>(context, listen: false);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('History Page'),
@@ -32,13 +37,21 @@ class _LibraryState extends State<Library> {
           }
 
           return ListView(
-            children: snapshot.data!.docs.map((QueryDocumentSnapshot historyDoc) {
-              Map<String, dynamic> data = historyDoc.data() as Map<String, dynamic>;
+            children:
+                snapshot.data!.docs.map((QueryDocumentSnapshot historyDoc) {
+              Map<String, dynamic> data =
+                  historyDoc.data() as Map<String, dynamic>;
 
-              return ListTile(
-                leading: Image.network(data['image']),
-                title: Text(data['title']),
-                subtitle: Text(data['artist']),
+              return InkWell(
+                onTap: () {
+                  selectedSongDataProvider
+                      .updateSelectedSongData(data['songData']);
+                },
+                child: ListTile(
+                  leading: Image.network(data['image']),
+                  title: Text(data['title']),
+                  subtitle: Text(data['artist']),
+                ),
               );
             }).toList(),
           );

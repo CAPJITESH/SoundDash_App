@@ -65,13 +65,40 @@ class Api {
       throw Exception('Failed to fetch API response');
     }
   }
+
+  static Future<String> getLyrics(String id) async {
+    try {
+      final Uri lyricsUrl = Uri.https(
+        'www.jiosaavn.com',
+        '/api.php?__call=lyrics.getLyrics&lyrics_id=$id&ctx=web6dot0&api_version=4&_format=json',
+      );
+      final Response res =
+          await get(lyricsUrl, headers: {'Accept': 'application/json'});
+
+      // print(res.body);
+
+      final List<String> rawLyrics = res.body.split('-->');
+      Map fetchedLyrics = {};
+      if (rawLyrics.length > 1) {
+        fetchedLyrics = json.decode(rawLyrics[1]) as Map;
+      } else {
+        fetchedLyrics = json.decode(rawLyrics[0]) as Map;
+      }
+      final String lyrics =
+          fetchedLyrics['lyrics'].toString().replaceAll('<br>', '\n');
+      return lyrics;
+    } catch (e) {
+      print("this is the error : $e");
+      return '';
+    }
+  }
+
 }
 
 class HomeDataFetcher {
   Future<Map<String, dynamic>> formatHomeData(Map<String, dynamic> data) async {
     Map<String, dynamic> temp = {};
     for (var i in data['modules'].keys) {
-
       String title = data['modules'][i]['title'];
       List<dynamic> value = data[i];
       temp[title] = value;
