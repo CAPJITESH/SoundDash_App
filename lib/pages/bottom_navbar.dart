@@ -21,7 +21,7 @@ class _NavbarState extends State<Navbar> {
     final selectedSongDataProvider =
         Provider.of<SelectedSongDataProvider>(context);
     final selectedSongData = selectedSongDataProvider.selectedSongData;
-
+    final int selectedSongIndex = selectedSongDataProvider.selectedIndex ?? 99999999999;
     Widget playerWidget;
 
     if (selectedSongData is Map<String, dynamic>) {
@@ -30,9 +30,10 @@ class _NavbarState extends State<Navbar> {
         key: Key(selectedSongData.toString()),
       );
     } else if (selectedSongData is List<dynamic> &&
-        selectedSongData.isNotEmpty) {
+        selectedSongIndex != 99999999999) {
       playerWidget = PlaylistPlayer(
         playlistData: selectedSongData,
+        index: selectedSongIndex,
         key: Key(selectedSongData.toString()),
       );
     } else {

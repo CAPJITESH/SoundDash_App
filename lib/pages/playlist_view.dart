@@ -20,20 +20,21 @@ class _PlaylistViewState extends State<PlaylistView> {
   Widget build(BuildContext context) {
     String artistNames = '';
 
-    try{
-    if (widget.albumData['more_info'] != null) {
-      if (widget.albumData['more_info']['artistMap'] != null) {
-        widget.albumData['more_info']['artistMap']['artists'].forEach((item) {
-          artistNames += item['name'];
-        });
-      } else {
-        artistNames = widget.albumData['subtitle'];
+    try {
+      if (widget.albumData['more_info'] != null) {
+        if (widget.albumData['more_info']['artistMap'] != null) {
+          widget.albumData['more_info']['artistMap']['artists'].forEach((item) {
+            artistNames += item['name'];
+          });
+        } else {
+          artistNames = widget.albumData['subtitle'];
+        }
       }
-    }}
-    catch (e) {
+    } catch (e) {
       artistNames = " ";
     }
-    final selectedSongDataProvider = Provider.of<SelectedSongDataProvider>(context, listen: false);
+    final selectedSongDataProvider =
+        Provider.of<SelectedSongDataProvider>(context, listen: false);
     return WillPopScope(
       onWillPop: () async {
         // Handle the back button press event
@@ -49,16 +50,16 @@ class _PlaylistViewState extends State<PlaylistView> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color.fromARGB(255, 70, 1, 50),
-              Color.fromARGB(255, 50, 1, 40),
-              Color.fromARGB(255, 10, 1, 20),
+              const Color.fromARGB(255, 70, 1, 50),
+              const Color.fromARGB(255, 50, 1, 40),
+              const Color.fromARGB(255, 10, 1, 20),
               Colors.black.withOpacity(1),
             ],
           ),
         ),
         child: Column(
           children: [
-            SizedBox(
+            const SizedBox(
               height: 40,
             ),
             Container(
@@ -72,18 +73,21 @@ class _PlaylistViewState extends State<PlaylistView> {
                 ),
               ),
             ),
-            SizedBox(height: 20,),
+            const SizedBox(
+              height: 20,
+            ),
             Text(
               widget.albumData['title'],
-              style: TextStyle(fontSize: 25),
+              style: const TextStyle(fontSize: 25),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            SizedBox(height: 10,),
-
+            const SizedBox(
+              height: 10,
+            ),
             Text(
               artistNames,
-              style: TextStyle(fontSize: 15),
+              style: const TextStyle(fontSize: 15),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -102,7 +106,8 @@ class _PlaylistViewState extends State<PlaylistView> {
                         IconButton(
                           onPressed: () {
                             // print(songResults);
-                            selectedSongDataProvider.updateSelectedSongData(songResults);
+                            selectedSongDataProvider.startPlaylistSongs(
+                                songResults, 0);
                           },
                           icon: const Icon(Icons.play_circle),
                           iconSize: 50,
@@ -122,7 +127,9 @@ class _PlaylistViewState extends State<PlaylistView> {
                                 final songData = songResults[index];
 
                                 return PlayAlbumCard(
+                                  index: index,
                                   songData: songData,
+                                  playlist: songResults,
                                 );
                               },
                             ),
@@ -133,7 +140,7 @@ class _PlaylistViewState extends State<PlaylistView> {
                   } else if (snapshot.hasError) {
                     return Text('Error: ${snapshot.error}');
                   } else {
-                    return CircularProgressIndicator();
+                    return const CircularProgressIndicator();
                   }
                 },
               ),

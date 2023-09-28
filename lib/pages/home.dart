@@ -112,45 +112,54 @@ class _HomeState extends State<Home> {
 
                         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                           return Container(); // Return an empty container if there are no favorites
-                        }
+                        } else {
+                          List<dynamic> listOfFav = [];
+                          if (snapshot.data!.docs.isNotEmpty) {
+                            for (var doc in snapshot.data!.docs) {
+                              if (doc.data() != null) {
+                                listOfFav
+                                    .add(doc.data() as Map<String, dynamic>);
+                              }
+                            }
+                          }
 
-                        return Column(
-                          children: [
-                            Container(
-                              width: MediaQuery.of(context).size.width,
-                              child: const Text(
-                                'Favorites',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  color: Color.fromARGB(255, 219, 172, 255),
+                          return Column(
+                            children: [
+                              Container(
+                                width: MediaQuery.of(context).size.width,
+                                child: const Text(
+                                  'Favorites',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    color: Color.fromARGB(255, 219, 172, 255),
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(
-                              height: 5,
-                            ),
-                            Container(
-                              height: 135,
-                              child: GridView(
-                                scrollDirection: Axis.horizontal,
-                                gridDelegate:
-                                    const SliverGridDelegateWithMaxCrossAxisExtent(
-                                  maxCrossAxisExtent: 100,
-                                  childAspectRatio: 0.35,
-                                  crossAxisSpacing: 4,
-                                  mainAxisSpacing: 4,
-                                ),
-                                children: [
-                                  for (var doc in snapshot.data!.docs)
-                                    if (doc.data() != null)
+                              const SizedBox(
+                                height: 5,
+                              ),
+                              Container(
+                                height: 135,
+                                child: GridView(
+                                  scrollDirection: Axis.horizontal,
+                                  gridDelegate:
+                                      const SliverGridDelegateWithMaxCrossAxisExtent(
+                                    maxCrossAxisExtent: 100,
+                                    childAspectRatio: 0.35,
+                                    crossAxisSpacing: 4,
+                                    mainAxisSpacing: 4,
+                                  ),
+                                  children: [
+                                    for (int i = 0; i < listOfFav.length; i++)
                                       FavouriteCard(
-                                          data: doc.data()
-                                              as Map<String, dynamic>),
-                                ],
+                                        data: listOfFav[i],
+                                      ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                        );
+                            ],
+                          );
+                        }
                       },
                     ),
 

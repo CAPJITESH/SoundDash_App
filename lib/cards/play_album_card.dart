@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class PlayAlbumCard extends StatelessWidget {
-  final dynamic songData;
+  final dynamic songData, playlist;
+  final int index;
 
-  const PlayAlbumCard({required this.songData});
+  const PlayAlbumCard(
+      {required this.songData, required this.index, required this.playlist});
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +20,7 @@ class PlayAlbumCard extends StatelessWidget {
         Provider.of<SelectedSongDataProvider>(context, listen: false);
     return InkWell(
       onTap: () {
-        selectedSongDataProvider.updateSelectedSongData(songData);
+        selectedSongDataProvider.startPlaylistSongs(playlist, index);
       },
       child: Container(
         // height: 100,

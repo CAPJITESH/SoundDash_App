@@ -1,11 +1,16 @@
+import 'package:SoundDash/services/download.dart';
+import 'package:SoundDash/services/get_lyrics.dart';
 import 'package:assets_audio_player/assets_audio_player.dart';
+import 'package:flip_card/flip_card.dart';
 import 'package:flutter/material.dart';
-
+import 'package:SoundDash/services/database.dart';
 
 class PlaylistPlayer extends StatefulWidget {
   final List<dynamic> playlistData;
+  final int index;
 
-  const PlaylistPlayer({Key? key, required this.playlistData})
+  const PlaylistPlayer(
+      {Key? key, required this.playlistData, required this.index})
       : super(key: key);
 
   @override
@@ -19,7 +24,9 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
       ValueNotifier(Duration.zero);
   final ValueNotifier<Duration> _totalDurationNotifier =
       ValueNotifier(Duration.zero);
-  List<Audio> additionalSongs = [];
+  // List<Audio> additionalSongs = [];
+  bool favourite = false;
+  bool isShuffling = false;
 
   @override
   void initState() {
@@ -29,9 +36,33 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
       _currentPositionNotifier.value = duration;
     });
     audioPlayer.current.listen((playing) {
-      if (playing != null && playing.audio != null) {
-        _totalDurationNotifier.value = playing.audio!.duration!;
+      if (playing != null) {
+        _totalDurationNotifier.value = playing.audio.duration;
       }
+      Map<String, dynamic> currentPlayingSong = {};
+
+      if (playing != null) {
+        currentPlayingSong = {
+          'id': playing.audio.audio.metas.id,
+          'title': playing.audio.audio.metas.title,
+          'artist': playing.audio.audio.metas.artist,
+          'album': playing.audio.audio.metas.album,
+          'image': playing.audio.audio.metas.image?.path,
+          'audio': playing.audio.audio.path,
+          'songData': playing.audio.audio.metas.extra
+        };
+        DatabaseService db = DatabaseService();
+
+        db.addInHistory(currentPlayingSong);
+
+        setState(() {
+          favourite = db.isFav(currentPlayingSong) as bool;
+        });
+      }
+    });
+
+    audioPlayer.onReadyToPlay.listen((audioInfo) {
+      favChecker();
     });
   }
 
@@ -50,30 +81,57 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
     print(widget.playlistData);
 
     print(widget.playlistData.length);
-    for (final item in widget.playlistData) {
+
+    for (int i = widget.index; i < widget.playlistData.length; i++) {
       playlistItems.add(
         Audio.network(
-          item['downloadUrl'][4]
+          widget.playlistData[i]['downloadUrl'][4]
               ['link'], // Assuming downloadUrl is a list
           metas: Metas(
-            title: item['name'],
-            artist: item['primaryArtists'],
-            album: item['album']['name'],
-            image: MetasImage.network(item['image'][2]['link']),
-          ),
+              id: widget.playlistData[i]['id'],
+              title: widget.playlistData[i]['name'],
+              artist: widget.playlistData[i]['primaryArtists'],
+              album: widget.playlistData[i]['album']['name'],
+              image: MetasImage.network(
+                  widget.playlistData[i]['image'][2]['link']),
+              extra: widget.playlistData[i]),
         ),
       );
     }
 
+    if (widget.index != 0) {
+      for (int i = 0; i < widget.index; i++) {
+        playlistItems.add(
+          Audio.network(
+            widget.playlistData[i]['downloadUrl'][4]
+                ['link'], // Assuming downloadUrl is a list
+            metas: Metas(
+                id: widget.playlistData[i]['id'],
+                title: widget.playlistData[i]['name'],
+                artist: widget.playlistData[i]['primaryArtists'],
+                album: widget.playlistData[i]['album']['name'],
+                image: MetasImage.network(
+                    widget.playlistData[i]['image'][2]['link']),
+                extra: widget.playlistData[i]),
+          ),
+        );
+      }
+    }
     // Open the playlist with the created items
     audioPlayer.open(
       Playlist(audios: playlistItems),
       showNotification: true,
       autoStart: true,
     );
-
     setState(() {
       gotPlaylistData = true;
+    });
+  }
+
+  shuffle() async {
+    audioPlayer.toggleShuffle();
+    setState(() {
+      isShuffling = !isShuffling;
     });
   }
 
@@ -103,6 +161,52 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
     String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
     String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
     return '$twoDigitMinutes:$twoDigitSeconds';
+  }
+
+  void favChecker() async {
+    favourite = false;
+
+    Map<String, dynamic> current = {
+      'id': audioPlayer.current.value?.audio.audio.metas.id,
+      'title': audioPlayer.current.value?.audio.audio.metas.title,
+      'artist': audioPlayer.current.value?.audio.audio.metas.artist,
+      'album': audioPlayer.current.value?.audio.audio.metas.album,
+      'image': audioPlayer.current.value?.audio.audio.metas.image?.path,
+      'audio': audioPlayer.current.value?.audio.audio.path,
+      'songData': audioPlayer.current.value?.audio.audio.metas.extra
+    };
+    DatabaseService db = DatabaseService();
+
+    bool res = await db.isFav(current);
+
+    setState(() {
+      favourite = res;
+    });
+  }
+
+  void favChanger() async {
+    Map<String, dynamic> current = {
+      'id': audioPlayer.current.value?.audio.audio.metas.id,
+      'title': audioPlayer.current.value?.audio.audio.metas.title,
+      'artist': audioPlayer.current.value?.audio.audio.metas.artist,
+      'album': audioPlayer.current.value?.audio.audio.metas.album,
+      'image': audioPlayer.current.value?.audio.audio.metas.image?.path,
+      'audio': audioPlayer.current.value?.audio.audio.path,
+      'songData': audioPlayer.current.value?.audio.audio.metas.extra
+    };
+
+    DatabaseService db = DatabaseService();
+    print(favourite);
+    await db.addRemoveFav(current, favourite);
+
+    setState(() {
+      favourite = !favourite;
+    });
+  }
+
+  Future<void> download_song() async {
+    Download d = Download();
+    d.download_song_mp3(audioPlayer.getCurrentAudioextra, context);
   }
 
   bool isExpanded = false;
@@ -183,7 +287,7 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
                       builder: (context, snapshot) {
                         final playing = snapshot.data;
                         final audio = playing?.audio;
-                        final metas = audio?.audio?.metas;
+                        final metas = audio?.audio.metas;
                         return Row(
                           children: [
                             Padding(
@@ -208,23 +312,25 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
                                 Container(
-                                  width: 100,
+                                  width: 80,
                                   child: Text(
                                     metas?.title ?? '',
                                     style: const TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 15,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white),
-                                    maxLines: 1,
+                                    maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                                 Container(
-                                  width: 130,
+                                  width: 80,
                                   child: Text(
                                     metas?.artist ?? '',
                                     style: const TextStyle(
-                                        fontSize: 14, color: Colors.white),
+                                        fontSize: 12,
+                                        color:
+                                            Color.fromARGB(255, 139, 139, 139)),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -264,6 +370,19 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
                       icon: const Icon(Icons.skip_next_rounded),
                       onPressed: () => skipNext(),
                     ),
+
+                    IconButton(
+                        onPressed: () {
+                          favChanger();
+                        },
+                        icon: favourite
+                            ? const Icon(
+                                Icons.favorite_rounded,
+                                color: Colors.red,
+                              )
+                            : const Icon(
+                                Icons.favorite_border_rounded,
+                              ))
                   ],
                 ),
                 // const SizedBox(height: 10),
@@ -419,6 +538,8 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
     );
   }
 
+  GlobalKey<FlipCardState> cardKey = GlobalKey<FlipCardState>();
+
   Widget buildExpandedView() {
     return WillPopScope(
       onWillPop: () async {
@@ -445,31 +566,50 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
                 builder: (context, snapshot) {
                   final playing = snapshot.data;
                   final audio = playing?.audio;
-                  final metas = audio?.audio?.metas;
+                  final metas = audio?.audio.metas;
                   return Column(
                     children: [
-                      Image.network(
-                        metas?.image?.path ??
-                            '', // Use the current song's image path
-                        width: 200,
-                        height: 200,
+                      ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              print(audioPlayer
+                                  .current.value?.audio.audio.metas.id);
+
+                              cardKey.currentState!.toggleCard();
+                            });
+                          },
+                          child: Text('show lyrics')),
+                      FlipCard(
+                        fill: Fill.fillBack,
+                        key: cardKey,
+                        direction: FlipDirection.HORIZONTAL,
+                        side: CardSide.FRONT,
+                        front: Image.network(
+                          metas?.image?.path ??
+                              '', // Use the current song's image path
+                          width: 250,
+                          height: 250,
+                        ),
+                        back: GetLyrics(
+                            id: audioPlayer.current.value?.audio.audio.metas.id
+                                as String),
                       ),
-                      SizedBox(height: 20),
+                      // const SizedBox(height: 10),
                       Text(
                         metas?.title ?? '', // Use the current song's title
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                       Text(
                         metas?.artist ?? '', // Use the current song's artist
-                        style: TextStyle(fontSize: 16),
+                        style: const TextStyle(fontSize: 16),
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 10),
                     ],
                   );
                 },
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 10),
               ValueListenableBuilder<Duration>(
                 valueListenable: _currentPositionNotifier,
                 builder: (context, position, _) {
@@ -483,7 +623,7 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
                   );
                 },
               ),
-              SizedBox(height: 5),
+              const SizedBox(height: 5),
               ValueListenableBuilder<Duration>(
                 valueListenable: _currentPositionNotifier,
                 builder: (context, position, _) {
@@ -502,7 +642,7 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
                 children: [
                   IconButton(
                     iconSize: 50,
-                    icon: Icon(Icons.skip_previous_rounded),
+                    icon: const Icon(Icons.skip_previous_rounded),
                     onPressed: () => skipPrevious(),
                   ),
                   StreamBuilder<bool>(
@@ -523,7 +663,7 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
                   IconButton(
                     iconSize: 50,
                     color: gotPlaylistData ? Colors.white : Colors.grey[500],
-                    icon: Icon(Icons.skip_next_rounded),
+                    icon: const Icon(Icons.skip_next_rounded),
                     onPressed: () => skipNext(),
                   ),
                 ],
@@ -533,8 +673,45 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
                   onPressed: () {
                     _showBottomSheet(context);
                   },
-                  child: Text('Next in Queue'),
+                  child: const Text('Next in Queue'),
                 ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      download_song();
+                    },
+                    icon: const Icon(Icons.download_rounded),
+                    iconSize: 30,
+                  ),
+                  IconButton(
+                      onPressed: () {
+                        favChanger();
+                      },
+                      iconSize: 30,
+                      icon: favourite
+                          ? const Icon(
+                              Icons.favorite_rounded,
+                              color: Colors.red,
+                            )
+                          : const Icon(
+                              Icons.favorite_border_rounded,
+                            )),
+                  IconButton(
+                      onPressed: () {
+                        shuffle();
+                      },
+                      iconSize: 30,
+                      icon: isShuffling
+                          ? const Icon(
+                              Icons.shuffle_rounded,
+                            )
+                          : const Icon(
+                              Icons.repeat,
+                            )),
+                ],
+              ),
             ],
           ),
         ),

@@ -1,12 +1,11 @@
 import 'package:SoundDash/api/song_api.dart';
 import 'package:SoundDash/services/database.dart';
+import 'package:SoundDash/services/download.dart';
+
 import 'package:SoundDash/services/get_lyrics.dart';
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:flip_card/flip_card.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_file_downloader/flutter_file_downloader.dart';
-
-import 'package:permission_handler/permission_handler.dart';
 // import 'package:metadata_god/metadata_god.dart';
 
 class BottomSongPlayer extends StatefulWidget {
@@ -89,13 +88,12 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
     final Audio initialSong = Audio.network(
       widget.songData['downloadUrl'][4]['link'],
       metas: Metas(
-        id: widget.songData['id'],
-        title: widget.songData['name'],
-        artist: widget.songData['primaryArtists'],
-        album: widget.songData['album']['name'],
-        image: MetasImage.network(widget.songData['image'][2]['link']),
-        extra: widget.songData
-      ),
+          id: widget.songData['id'],
+          title: widget.songData['name'],
+          artist: widget.songData['primaryArtists'],
+          album: widget.songData['album']['name'],
+          image: MetasImage.network(widget.songData['image'][2]['link']),
+          extra: widget.songData),
     );
 
     // Open the initial song for playback
@@ -112,13 +110,12 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
       return Audio.network(
         item['data'][0]['downloadUrl'][4]['link'],
         metas: Metas(
-          id: item['data'][0]['id'],
-          title: item['data'][0]['name'],
-          artist: item['data'][0]['primaryArtists'],
-          album: item['data'][0]['album']['name'],
-          image: MetasImage.network(item['data'][0]['image'][2]['link']),
-          extra: item['data'][0]
-        ),
+            id: item['data'][0]['id'],
+            title: item['data'][0]['name'],
+            artist: item['data'][0]['primaryArtists'],
+            album: item['data'][0]['album']['name'],
+            image: MetasImage.network(item['data'][0]['image'][2]['link']),
+            extra: item['data'][0]),
       );
     }).toList();
 
@@ -143,13 +140,12 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
       return Audio.network(
         item['data'][0]['downloadUrl'][2]['link'],
         metas: Metas(
-          id: item['data'][0]['id'],
-          title: item['data'][0]['name'],
-          artist: item['data'][0]['primaryArtists'],
-          album: item['data'][0]['album']['name'],
-          image: MetasImage.network(item['data'][0]['image'][2]['link']),
-          extra: item['data'][0]
-        ),
+            id: item['data'][0]['id'],
+            title: item['data'][0]['name'],
+            artist: item['data'][0]['primaryArtists'],
+            album: item['data'][0]['album']['name'],
+            image: MetasImage.network(item['data'][0]['image'][2]['link']),
+            extra: item['data'][0]),
       );
     }).toList();
 
@@ -189,6 +185,15 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
     String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
     String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
     return '$twoDigitMinutes:$twoDigitSeconds';
+  }
+
+  bool isShuffling = false;
+
+  shuffle() async {
+    audioPlayer.toggleShuffle();
+    setState(() {
+      isShuffling = !isShuffling;
+    });
   }
 
   bool isExpanded = false;
@@ -247,59 +252,10 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
   }
 
   Future<void> download_song() async {
-    try {
-      var status = await Permission.storage.request();
-      if (status.isGranted) {
-        FileDownloader.downloadFile(
-            url: audioPlayer.readingPlaylist!.current.path,
-            name: '${audioPlayer.getCurrentAudioTitle}.mp3',
-            onDownloadCompleted: (String path) async {
-              print('FILE DOWNLOADED TO PATH: $path');
+    Download d = Download();
 
-              String temp = "${audioPlayer.getCurrentAudioTitle} is Downloaded";
+    d.download_song_mp3(audioPlayer.getCurrentAudioextra, context);
 
-              //     await MetadataGod.writeMetadata(
-              //   file: path,
-              //   metadata: Metadata(
-              //     title: audioPlayer.current.value?.audio.audio.metas.title,
-              //     artist: audioPlayer.current.value?.audio.audio.metas.artist,
-              //     album: audioPlayer.current.value?.audio.audio.metas.album,
-              //     // lyrics: lyrics,
-              //     // comment: 'BlackHole',
-              //     // trackNumber: 1,
-              //     // trackTotal: 12,
-              //     // discNumber: 1,
-              //     // discTotal: 5,
-              //     picture: Picture(
-              //       data: File(audioPlayer.current.value?.audio.audio.metas.image!.path as String).readAsBytesSync(),
-              //       mimeType: 'image/jpeg',
-              //     ),
-              //   ),
-              // );
-
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                backgroundColor: Colors.black,
-                closeIconColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(70)),
-                behavior: SnackBarBehavior.floating,
-                duration: const Duration(seconds: 2),
-                content: Text(
-                  temp,
-                  style: const TextStyle(color: Colors.white),
-                ),
-              ));
-            },
-            // onProgress: (),
-            onDownloadError: (String error) {
-              print('DOWNLOAD ERROR: $error');
-            });
-      } else {
-        print('Permission denied');
-      }
-    } catch (e) {
-      print('Error downloading audio: $e');
-    }
   }
 
   @override
@@ -669,9 +625,11 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                           width: 250,
                           height: 250,
                         ),
-                        back: GetLyrics(id: audioPlayer.current.value?.audio.audio.metas.id as String),
+                        back: GetLyrics(
+                            id: audioPlayer.current.value?.audio.audio.metas.id
+                                as String),
                       ),
-                      const SizedBox(height: 10),
+                      // const SizedBox(height: 10),
                       Text(
                         metas?.title ?? '', // Use the current song's title
                         style: const TextStyle(
@@ -774,7 +732,19 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                             )
                           : const Icon(
                               Icons.favorite_border_rounded,
-                            ))
+                            )),
+                  IconButton(
+                      onPressed: () {
+                        shuffle();
+                      },
+                      iconSize: 30,
+                      icon: isShuffling
+                          ? const Icon(
+                              Icons.shuffle_rounded,
+                            )
+                          : const Icon(
+                              Icons.repeat,
+                            )),
                 ],
               ),
             ],
