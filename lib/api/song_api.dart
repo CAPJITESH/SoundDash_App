@@ -2,10 +2,23 @@ import 'package:http/http.dart';
 import 'dart:convert';
 
 class Api {
-  static Future<Map<String, dynamic>> fetchApiResponse(String endpoint) async {
+  // static Future<Map<String, dynamic>> fetchApiResponse(String endpoint) async {
+  //   final response = await get(Uri.parse(endpoint));
+  //   if (response.statusCode == 200) {
+  //     final responseBody = json.decode(response.body);
+  //     return responseBody as Map<String, dynamic>;
+  //   } else {
+  //     throw Exception('Failed to fetch API response');
+  //   }
+  // }
+
+  static Future<Map<String, dynamic>> getSongDetails(String id) async {
+    final endpoint = "https://saavn.me/songs?id=$id";
+
     final response = await get(Uri.parse(endpoint));
     if (response.statusCode == 200) {
       final responseBody = json.decode(response.body);
+      // print(responseBody);
       return responseBody as Map<String, dynamic>;
     } else {
       throw Exception('Failed to fetch API response');
@@ -66,6 +79,43 @@ class Api {
     }
   }
 
+  static Future<Map<String, dynamic>> performSearch(String query) async {
+    final endpoint =
+        "https://www.jiosaavn.com/api.php?_format=json&_marker=0&api_version=4&ctx=web6dot0&__call=autocomplete.get&cc=in&includeMetaTags=2&query=$query";
+
+    final response = await get(Uri.parse(endpoint));
+    if (response.statusCode == 200) {
+      final responseBody = json.decode(response.body);
+
+      Map<String, dynamic> temp = {};
+
+      if (responseBody['topquery'] != null &&
+          responseBody['topquery']['data'].length != 0) {
+        temp['Top Searched'] = responseBody['topquery']['data'];
+      }
+
+      if (responseBody['songs'] != null &&
+          responseBody['songs']['data'].length != 0) {
+        temp['Songs'] = responseBody['songs']['data'];
+      }
+      if (responseBody['albums'] != null &&
+          responseBody['albums']['data'].length != 0) {
+        temp['Albums'] = responseBody['albums']['data'];
+      }
+      if (responseBody['playlists'] != null &&
+          responseBody['playlists']['data'].length != 0) {
+        temp['Playlists'] = responseBody['playlists']['data'];
+      }
+      if (responseBody['artists'] != null &&
+          responseBody['artists']['data'].length != 0) {
+        temp['Artists'] = responseBody['artists']['data'];
+      }
+      return temp;
+    } else {
+      throw Exception('Failed to fetch API response');
+    }
+  }
+
   static Future<String> getLyrics(String id) async {
     try {
       final Uri lyricsUrl = Uri.https(
@@ -92,7 +142,6 @@ class Api {
       return '';
     }
   }
-
 }
 
 class HomeDataFetcher {

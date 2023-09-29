@@ -77,14 +77,14 @@ class Download {
     }
 
 // ignore: use_build_context_synchronously
-    FloatingSnackBar(
-      message: 'There is some error in downloading...Try again later',
-      context: context,
-      textColor: Colors.white,
-      textStyle: const TextStyle(color: Colors.white),
-      duration: const Duration(milliseconds: 4000),
-      backgroundColor: Colors.black,
-    );
+    // FloatingSnackBar(
+    //   message: 'There is some error in downloading...Try again later',
+    //   context: context,
+    //   textColor: Colors.white,
+    //   textStyle: const TextStyle(color: Colors.white),
+    //   duration: const Duration(milliseconds: 4000),
+    //   backgroundColor: Colors.black,
+    // );
 
     return 'There is some error in downloading...Try again later';
   }

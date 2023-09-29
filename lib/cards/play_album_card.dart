@@ -1,4 +1,4 @@
-import 'package:SoundDash/services/play_next_addToQueue.dart';
+import 'package:SoundDash/services/songs_card_options.dart';
 import 'package:SoundDash/services/selected_song_data.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -45,7 +45,7 @@ class PlayAlbumCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
               ),
-              trailing: QueueService(songData: songData),
+              trailing: SongsOptions(songData: songData),
             ),
           ),
         ),

@@ -1,18 +1,19 @@
+import 'package:SoundDash/services/download.dart';
 import 'package:SoundDash/services/selected_song_data.dart';
 import 'package:flutter/material.dart';
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:provider/provider.dart';
 
-class QueueService extends StatefulWidget {
+class SongsOptions extends StatefulWidget {
   final Map<String, dynamic> songData;
 
-  const QueueService({super.key, required this.songData});
+  const SongsOptions({super.key, required this.songData});
 
   @override
-  State<QueueService> createState() => _QueueServiceState();
+  State<SongsOptions> createState() => _QueueServiceState();
 }
 
-class _QueueServiceState extends State<QueueService> {
+class _QueueServiceState extends State<SongsOptions> {
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
@@ -21,7 +22,7 @@ class _QueueServiceState extends State<QueueService> {
           case 'item1':
             void play_next() async {
               final Audio nextSong = Audio.network(
-                widget.songData['downloadUrl'][2]['link'],
+                widget.songData['downloadUrl'][4]['link'],
                 metas: Metas(
                   title: widget.songData['name'],
                   artist: widget.songData['primaryArtists'],
@@ -53,7 +54,7 @@ class _QueueServiceState extends State<QueueService> {
           case 'item2':
             void add_to_queue() async {
               final Audio lastSong = Audio.network(
-                widget.songData['downloadUrl'][2]['link'],
+                widget.songData['downloadUrl'][4]['link'],
                 metas: Metas(
                   title: widget.songData['name'],
                   artist: widget.songData['primaryArtists'],
@@ -68,8 +69,7 @@ class _QueueServiceState extends State<QueueService> {
                 final audioplayer = AssetsAudioPlayer.withId(f);
                 int index = audioplayer.playlist!.audios.length;
                 audioplayer.playlist!.insert(index + 1, lastSong);
-              }
-              else {
+              } else {
                 final selectedSongDataProvider =
                     Provider.of<SelectedSongDataProvider>(context,
                         listen: false);
@@ -78,6 +78,12 @@ class _QueueServiceState extends State<QueueService> {
               }
             }
             add_to_queue();
+            break;
+
+          case 'item3':
+              Download d = Download();
+              d.download_song_mp3(widget.songData, context);
+            
             break;
         }
       },
@@ -89,6 +95,10 @@ class _QueueServiceState extends State<QueueService> {
         const PopupMenuItem(
           value: 'item2',
           child: Text('Add to Queue'),
+        ),
+        const PopupMenuItem(
+          value: 'item3',
+          child: Text('Download Song'),
         ),
       ],
       onCanceled: () {

@@ -50,7 +50,7 @@ dependencies:
   audio_service: ^0.18.10
   audiotagger: ^2.2.1
   floating_snackbar: ^1.0.3+1
-    
+  sliding_up_panel: ^2.0.0+1 
   # metadata_god: ^0.5.0
   # flutter_rust_bridge: ^1.82.1
   

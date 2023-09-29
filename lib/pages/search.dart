@@ -1,10 +1,8 @@
+import 'package:SoundDash/api/song_api.dart';
 import 'package:SoundDash/cards/search_song_card.dart';
+import 'package:SoundDash/pages/playlist_view.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:http/http.dart' as http;
-
-import 'dart:convert';
-
 
 class Search extends StatefulWidget {
   @override
@@ -14,7 +12,7 @@ class Search extends StatefulWidget {
 class _SearchState extends State<Search> {
   TextEditingController _textEditingController = TextEditingController();
   Timer? _debounce;
-  List<dynamic> _searchResults = [];
+  Map<String, dynamic> _searchResults = {};
 
   @override
   void dispose() {
@@ -24,25 +22,9 @@ class _SearchState extends State<Search> {
   }
 
   void _performSearch(String searchTerm) async {
-    final endpoint =
-        'https://saavn.me/search/songs?query=$searchTerm&page=1&limit=25';
-    // print(endpoint);
+    _searchResults = await Api.performSearch(searchTerm);
 
-    try {
-      final response = await http.get(Uri.parse(endpoint));
-      if (response.statusCode == 200) {
-        final responseBody = json.decode(response.body);
-        final results = responseBody['data']['results'] as List<dynamic>?;
-
-        setState(() {
-          _searchResults = results ?? [];
-        });
-      } else {
-        throw Exception('Failed to fetch API response');
-      }
-    } catch (error) {
-      print('API Error: $error');
-    }
+    setState(() {});
   }
 
   void _onTextChanged(String value) {
@@ -55,31 +37,82 @@ class _SearchState extends State<Search> {
     });
   }
 
+  bool _isFullScreenVisible = false;
+  Map<String, dynamic> AlbumData = {};
+
+  void _handleCardPressed(Map<String, dynamic> pressedData) {
+    setState(() {
+      _isFullScreenVisible = true;
+      AlbumData = pressedData;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Column(
+      child: Stack(
         children: [
-          TextField(
-            controller: _textEditingController,
-            onChanged: _onTextChanged,
-            decoration: InputDecoration(
-              hintText: 'Search',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                TextField(
+                  controller: _textEditingController,
+                  onChanged: _onTextChanged,
+                  decoration: InputDecoration(
+                    hintText: 'Search',
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                ),
+                if (_searchResults.isNotEmpty)
+                  ..._searchResults.entries.map((entry) {
+                    String sectionTitle = entry.key;
+                    List<dynamic> sectionData = entry.value;
+
+                    return Column(
+                      children: [
+                        Container(
+                          width: MediaQuery.of(context).size.width,
+                          padding: const EdgeInsets.only(top: 25, bottom: 8),
+                          child: Text(
+                            sectionTitle,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              color: Color.fromARGB(255, 219, 172, 255),
+                            ),
+                          ),
+                        ),
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: sectionData.length,
+                          itemBuilder: (context, index) {
+                            final sectionItemData = sectionData[index];
+
+                            return SearchSongCard(
+                              onCardPressed: _handleCardPressed,
+                              songData: sectionItemData,
+                            );
+                          },
+                        ),
+                      ],
+                    );
+                  }).toList(),
+              ],
             ),
           ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _searchResults.length,
-              itemBuilder: (context, index) {
-                final songData = _searchResults[index];
-                return SearchSongCard(songData: songData);
+          if (_isFullScreenVisible)
+            PlaylistView(
+              albumData: AlbumData,
+              onClose: (returnValue) {
+                setState(() {
+                  _isFullScreenVisible = false;
+                  // Do something with the return value if needed
+                });
               },
-            ),
-          ),
+            )
         ],
       ),
     );
