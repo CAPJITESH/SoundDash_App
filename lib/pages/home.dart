@@ -51,176 +51,178 @@ class _HomeState extends State<Home> {
       body: SafeArea(
         child: Stack(
           children: [
-            SingleChildScrollView(
-              child: Container(
-                padding: const EdgeInsets.only(left: 10),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      const Color.fromARGB(255, 70, 1, 50),
-                      const Color.fromARGB(255, 50, 1, 40),
-                      const Color.fromARGB(255, 10, 1, 20),
-                      Colors.black.withOpacity(1),
-                    ],
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    const SizedBox(
-                      height: 30,
-                    ),
-                    ElevatedButton(
-                        onPressed: auth.HandleGoogleSignOut,
-                        child: const Text('SignOut')),
-                    Container(
-                      width: MediaQuery.of(context).size.width,
-                      // color: Colors.white,
-                      child: const Text(
-                        "Hey, How it's Going",
-                        // textAlign: TextAlign.right,
-                        style: TextStyle(
-                            fontSize: 30,
-                            color: Color.fromARGB(255, 219, 172, 255)),
-                      ),
-                    ),
-                    Container(
-                      width: MediaQuery.of(context).size.width,
-                      child: Text(
-                        "Let's Vibe $nameOfUser",
-                        style: const TextStyle(
-                            fontSize: 25,
-                            color: Color.fromARGB(255, 234, 234, 234)),
-                      ),
-                    ),
-
-                    const SizedBox(
-                      height: 20,
-                    ),
-
-                    StreamBuilder<QuerySnapshot>(
-                      stream: DatabaseService().getFavStream(),
-                      builder: (BuildContext context,
-                          AsyncSnapshot<QuerySnapshot> snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
-
-                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                          return Container(); // Return an empty container if there are no favorites
-                        } else {
-                          List<dynamic> listOfFav = [];
-                          if (snapshot.data!.docs.isNotEmpty) {
-                            for (var doc in snapshot.data!.docs) {
-                              if (doc.data() != null) {
-                                listOfFav
-                                    .add(doc.data() as Map<String, dynamic>);
-                              }
-                            }
-                          }
-
-                          return Column(
-                            children: [
-                              Container(
-                                width: MediaQuery.of(context).size.width,
-                                child: const Text(
-                                  'Favorites',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    color: Color.fromARGB(255, 219, 172, 255),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(
-                                height: 5,
-                              ),
-                              Container(
-                                height: 135,
-                                child: GridView(
-                                  scrollDirection: Axis.horizontal,
-                                  gridDelegate:
-                                      const SliverGridDelegateWithMaxCrossAxisExtent(
-                                    maxCrossAxisExtent: 100,
-                                    childAspectRatio: 0.35,
-                                    crossAxisSpacing: 4,
-                                    mainAxisSpacing: 4,
-                                  ),
-                                  children: [
-                                    for (int i = 0; i < listOfFav.length; i++)
-                                      FavouriteCard(
-                                        data: listOfFav[i],
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          );
-                        }
-                      },
-                    ),
-
-                    FutureBuilder<Map<String, dynamic>>(
-                      future: fetchApiResponse(),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          final responseMap = snapshot.data!;
-
-                          return Column(
-                            children: responseMap.entries.map((entry) {
-                              String sectionTitle = entry.key;
-                              List<dynamic> sectionData = entry.value;
-
-                              return Column(
-                                children: [
-                                  Container(
-                                    width: MediaQuery.of(context).size.width,
-                                    padding: const EdgeInsets.only(
-                                        top: 25, bottom: 8),
-                                    child: Text(
-                                      sectionTitle,
-                                      style: const TextStyle(
-                                        fontSize: 20,
-                                        color:
-                                            Color.fromARGB(255, 219, 172, 255),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    height: 155,
-                                    child: ListView.builder(
-                                      scrollDirection: Axis.horizontal,
-                                      itemCount: sectionData.length,
-                                      itemBuilder: (context, index) {
-                                        final sectionItemData =
-                                            sectionData[index];
-
-                                        return AlbumCard(
-                                          onCardPressed: _handleCardPressed,
-                                          albumData: sectionItemData,
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              );
-                            }).toList(),
-                          );
-                        } else if (snapshot.hasError) {
-                          return Text('Error: ${snapshot.error}');
-                        } else {
-                          return const CircularProgressIndicator();
-                        }
-                      },
-                    ),
-                    // SizedBox(
-                    //   height: 100,
-                    // ),
+            Container(
+              padding: const EdgeInsets.only(left: 10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color.fromARGB(255, 70, 1, 50),
+                    const Color.fromARGB(255, 50, 1, 40),
+                    const Color.fromARGB(255, 10, 1, 20),
+                    Colors.black.withOpacity(1),
                   ],
                 ),
+              ),
+            ),
+            SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(
+                    height: 30,
+                  ),
+                  ElevatedButton(
+                      onPressed: auth.HandleGoogleSignOut,
+                      child: const Text('SignOut')),
+                  Container(
+                    width: MediaQuery.of(context).size.width,
+                    // color: Colors.white,
+                    child: const Text(
+                      "Hey, How it's Going",
+                      // textAlign: TextAlign.right,
+                      style: TextStyle(
+                          fontSize: 30,
+                          color: Color.fromARGB(255, 219, 172, 255)),
+                    ),
+                  ),
+                  Container(
+                    width: MediaQuery.of(context).size.width,
+                    child: Text(
+                      "Let's Vibe $nameOfUser",
+                      style: const TextStyle(
+                          fontSize: 25,
+                          color: Color.fromARGB(255, 234, 234, 234)),
+                    ),
+                  ),
+
+                  const SizedBox(
+                    height: 20,
+                  ),
+
+                  StreamBuilder<QuerySnapshot>(
+                    stream: DatabaseService().getFavStream(),
+                    builder: (BuildContext context,
+                        AsyncSnapshot<QuerySnapshot> snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      }
+
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return Container(); // Return an empty container if there are no favorites
+                      } else {
+                        List<dynamic> listOfFav = [];
+                        if (snapshot.data!.docs.isNotEmpty) {
+                          for (var doc in snapshot.data!.docs) {
+                            if (doc.data() != null) {
+                              final temp = doc.data() as Map<String, dynamic>;
+
+                              // print(temp['songData']);
+                              listOfFav.add(temp['songData']);
+                            }
+                          }
+                        }
+
+                        return Column(
+                          children: [
+                            Container(
+                              width: MediaQuery.of(context).size.width,
+                              child: const Text(
+                                'Favorites',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  color: Color.fromARGB(255, 219, 172, 255),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 5,
+                            ),
+                            Container(
+                              height: 135,
+                              child: GridView(
+                                scrollDirection: Axis.horizontal,
+                                gridDelegate:
+                                    const SliverGridDelegateWithMaxCrossAxisExtent(
+                                  maxCrossAxisExtent: 100,
+                                  childAspectRatio: 0.35,
+                                  crossAxisSpacing: 4,
+                                  mainAxisSpacing: 4,
+                                ),
+                                children: [
+                                  for (int i = 0; i < listOfFav.length; i++)
+                                    FavouriteCard(
+                                      
+                                      favPlaylist: listOfFav,
+                                      index: i,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                    },
+                  ),
+
+                  FutureBuilder<Map<String, dynamic>>(
+                    future: fetchApiResponse(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        final responseMap = snapshot.data!;
+
+                        return Column(
+                          children: responseMap.entries.map((entry) {
+                            String sectionTitle = entry.key;
+                            List<dynamic> sectionData = entry.value;
+
+                            return Column(
+                              children: [
+                                Container(
+                                  width: MediaQuery.of(context).size.width,
+                                  padding:
+                                      const EdgeInsets.only(top: 25, bottom: 8),
+                                  child: Text(
+                                    sectionTitle,
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      color: Color.fromARGB(255, 219, 172, 255),
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  height: 155,
+                                  child: ListView.builder(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: sectionData.length,
+                                    itemBuilder: (context, index) {
+                                      final sectionItemData =
+                                          sectionData[index];
+
+                                      return AlbumCard(
+                                        onCardPressed: _handleCardPressed,
+                                        albumData: sectionItemData,
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        );
+                      } else if (snapshot.hasError) {
+                        return Text('Error: ${snapshot.error}');
+                      } else {
+                        return const CircularProgressIndicator();
+                      }
+                    },
+                  ),
+                  // SizedBox(
+                  //   height: 100,
+                  // ),
+                ],
               ),
             ),
             if (_isFullScreenVisible)

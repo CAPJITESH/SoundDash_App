@@ -403,8 +403,8 @@ bool isOpen = false;
   _togglePanel() {
     setState(() {
       print(isOpen);
+      isOpen ? controller.close() : controller.open();
       isOpen = !isOpen;
-      isOpen ? controller.open() : controller.close();
     });
   }
 

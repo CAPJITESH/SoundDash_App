@@ -52,6 +52,22 @@ class _SearchState extends State<Search> {
     return SafeArea(
       child: Stack(
         children: [
+          Container(
+              padding: const EdgeInsets.only(left: 10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color.fromARGB(255, 70, 1, 50),
+                      const Color.fromARGB(255, 50, 1, 40),
+                      const Color.fromARGB(255, 10, 1, 20),
+                      Colors.black.withOpacity(1),
+                    
+                  ],
+                ),
+              ),
+            ),
           SingleChildScrollView(
             child: Column(
               children: [

@@ -33,8 +33,9 @@ dependencies:
   cupertino_icons: ^1.0.2
   assets_audio_player: ^3.0.6
   http: ^0.13.0
-  # audio_video_progress_bar: ^1.0.1
-  # rxdart: ^0.27.7
+  audio_video_progress_bar: ^1.0.1
+  rxdart: ^0.27.7
+  on_audio_query: ^2.6.0
   permission_handler: ^10.4.3
   provider: ^6.0.5
   path_provider: ^2.1.0
@@ -51,6 +52,8 @@ dependencies:
   audiotagger: ^2.2.1
   floating_snackbar: ^1.0.3+1
   sliding_up_panel: ^2.0.0+1 
+  audio_session: ^0.1.16
+  # just_audio_background: ^0.0.1-beta.10
   # metadata_god: ^0.5.0
   # flutter_rust_bridge: ^1.82.1
   

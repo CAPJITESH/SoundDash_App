@@ -3,18 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class FavouriteCard extends StatefulWidget {
-  final Map<String, dynamic> data;
-  const FavouriteCard({super.key, required this.data});
+  
+  final List<dynamic> favPlaylist;
+  final int index;
+  const FavouriteCard({super.key,required this.favPlaylist, required this.index});
 
   @override
   State<FavouriteCard> createState() => _FavouriteCardState();
 }
 
 class _FavouriteCardState extends State<FavouriteCard> {
-
   @override
   Widget build(BuildContext context) {
-  final selectedSongDataProvider = Provider.of<SelectedSongDataProvider>(context, listen: false);
+    final selectedSongDataProvider =
+        Provider.of<SelectedSongDataProvider>(context, listen: false);
 
     return Container(
       decoration: BoxDecoration(
@@ -24,26 +26,27 @@ class _FavouriteCardState extends State<FavouriteCard> {
       child: Center(
         child: InkWell(
           onTap: () {
-            selectedSongDataProvider.updateSelectedSongData(widget.data['songData']);
+            selectedSongDataProvider
+                .startPlaylistSongs(widget.favPlaylist, widget.index);
           },
           child: ListTile(
             leading: ClipRRect(
               borderRadius:
                   BorderRadius.circular(8), // Adjust the radius as needed
               child: Image.network(
-                widget.data['image'],
+                widget.favPlaylist[widget.index]['image'][2]['link'],
                 height: 70,
                 fit: BoxFit.cover,
               ),
             ),
             title: Text(
-              widget.data['title'],
+              widget.favPlaylist[widget.index]['name'],
               style: const TextStyle(fontSize: 15),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
             subtitle: Text(
-              widget.data['artist'],
+              widget.favPlaylist[widget.index]['primaryArtists'],
               style: const TextStyle(fontSize: 12),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

@@ -1,3 +1,4 @@
+import 'package:SoundDash/audio_navBar/internal_song_player.dart';
 import 'package:SoundDash/audio_navBar/song_player.dart';
 import 'package:SoundDash/audio_navBar/playlist_player.dart';
 import 'package:SoundDash/pages/home.dart';
@@ -6,6 +7,7 @@ import 'package:SoundDash/pages/library.dart';
 import 'package:SoundDash/pages/search.dart';
 import 'package:SoundDash/services/selected_song_data.dart';
 import 'package:flutter/material.dart';
+import 'package:on_audio_query/on_audio_query.dart';
 import 'package:provider/provider.dart';
 
 class Navbar extends StatefulWidget {
@@ -21,7 +23,10 @@ class _NavbarState extends State<Navbar> {
     final selectedSongDataProvider =
         Provider.of<SelectedSongDataProvider>(context);
     final selectedSongData = selectedSongDataProvider.selectedSongData;
-    final int selectedSongIndex = selectedSongDataProvider.selectedIndex ?? 99999999999;
+    final int selectedSongIndex =
+        selectedSongDataProvider.selectedIndex ?? 99999999999;
+    final bool isOfflinePlayer = selectedSongDataProvider.isOffline ?? false;
+
     Widget playerWidget;
 
     if (selectedSongData is Map<String, dynamic>) {
@@ -36,6 +41,11 @@ class _NavbarState extends State<Navbar> {
         index: selectedSongIndex,
         key: Key(selectedSongData.toString()),
       );
+    } else if (selectedSongData is List<SongModel> &&
+        selectedSongIndex != 99999999999 &&
+        isOfflinePlayer == true) {
+      playerWidget = InternalSongsPlayer(
+          playlistData: selectedSongData, index: selectedSongIndex);
     } else {
       playerWidget = const SizedBox();
     }
@@ -54,7 +64,7 @@ class _NavbarState extends State<Navbar> {
             ),
             renderView(
               2,
-              const InternalSongs(),
+              MyApp(),
             ),
             renderView(
               3,

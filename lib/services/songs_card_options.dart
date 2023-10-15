@@ -28,7 +28,9 @@ class _QueueServiceState extends State<SongsOptions> {
                   artist: widget.songData['primaryArtists'],
                   album: widget.songData['album']['name'],
                   image:
-                      MetasImage.network(widget.songData['image'][2]['link']),
+                      MetasImage.network(widget.songData['image'][2]['link'],
+                  ),
+                  extra: widget.songData
                 ),
               );
 
@@ -61,6 +63,7 @@ class _QueueServiceState extends State<SongsOptions> {
                   album: widget.songData['album']['name'],
                   image:
                       MetasImage.network(widget.songData['image'][2]['link']),
+                  extra: widget.songData
                 ),
               );
               final playerName = AssetsAudioPlayer.allPlayers();

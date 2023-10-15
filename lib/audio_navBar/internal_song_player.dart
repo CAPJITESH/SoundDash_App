@@ -1,75 +1,46 @@
-import 'package:SoundDash/api/song_api.dart';
-import 'package:SoundDash/services/database.dart';
-import 'package:SoundDash/services/download.dart';
-
 import 'package:SoundDash/services/get_lyrics.dart';
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:flip_card/flip_card.dart';
 import 'package:flutter/material.dart';
+import 'package:on_audio_query/on_audio_query.dart';
+
 import 'package:sliding_up_panel/sliding_up_panel.dart';
-// import 'package:metadata_god/metadata_god.dart';
 
-class BottomSongPlayer extends StatefulWidget {
-  final Map<String, dynamic> songData;
+class InternalSongsPlayer extends StatefulWidget {
+  final List<SongModel> playlistData;
+  final int index;
 
-  const BottomSongPlayer({Key? key, required this.songData}) : super(key: key);
+  const InternalSongsPlayer(
+      {Key? key, required this.playlistData, required this.index})
+      : super(key: key);
 
   @override
-  _BottomSongPlayerState createState() => _BottomSongPlayerState();
+  // ignore: library_private_types_in_public_api
+  _InternalSongsPlayerState createState() => _InternalSongsPlayerState();
 }
 
-class _BottomSongPlayerState extends State<BottomSongPlayer> {
+class _InternalSongsPlayerState extends State<InternalSongsPlayer> {
   final AssetsAudioPlayer audioPlayer = AssetsAudioPlayer();
   final ValueNotifier<Duration> _currentPositionNotifier =
       ValueNotifier(Duration.zero);
   final ValueNotifier<Duration> _totalDurationNotifier =
       ValueNotifier(Duration.zero);
+  // List<Audio> additionalSongs = [];
 
-  List<Audio> additionalSongs = [];
-  List<Map<String, dynamic>> playlistData = [];
-  bool favourite = false;
+  bool isShuffling = false;
 
   @override
   void initState() {
     super.initState();
     setupPlaylist();
+    print('inited dataa');
+
     audioPlayer.currentPosition.listen((duration) {
       _currentPositionNotifier.value = duration;
     });
     audioPlayer.current.listen((playing) {
       if (playing != null) {
         _totalDurationNotifier.value = playing.audio.duration;
-      }
-    });
-
-    audioPlayer.current.listen((playing) {
-      Map<String, dynamic> currentPlayingSong = {};
-
-      if (playing != null) {
-        currentPlayingSong = {
-          'id': playing.audio.audio.metas.id,
-          'title': playing.audio.audio.metas.title,
-          'artist': playing.audio.audio.metas.artist,
-          'album': playing.audio.audio.metas.album,
-          'image': playing.audio.audio.metas.image?.path,
-          'audio': playing.audio.audio.path,
-          'songData': playing.audio.audio.metas.extra
-        };
-        DatabaseService db = DatabaseService();
-
-        db.addInHistory(currentPlayingSong);
-
-        setState(() {
-          favourite = db.isFav(currentPlayingSong) as bool;
-        });
-      }
-    });
-
-    audioPlayer.onReadyToPlay.listen((audioInfo) {
-      favChecker();
-      if (audioPlayer.readingPlaylist!.currentIndex ==
-          audioPlayer.playlist!.audios.length - 1) {
-        addMoreSongs();
       }
     });
   }
@@ -85,77 +56,39 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
   bool gotPlaylistData = false;
 
   void setupPlaylist() async {
-    // Add the initial song to the playlist
-    final Audio initialSong = Audio.network(
-      widget.songData['downloadUrl'][4]['link'],
-      metas: Metas(
-          id: widget.songData['id'],
-          title: widget.songData['name'],
-          artist: widget.songData['primaryArtists'],
-          album: widget.songData['album']['name'],
-          image: MetasImage.network(widget.songData['image'][2]['link']),
-          extra: widget.songData),
-    );
+    print(
+        "ncnkxnkcnkn kvndkvnkdnskvnksdndkvnkdnkvnksdnkvnksdnkvnksnvknsknvkwkvbkwe mdv");
+    print('sncksnkcnknkvnkndvkndknvkndkvnkenvk');
 
-    // Open the initial song for playback
-    audioPlayer.open(
-      Playlist(audios: [initialSong]),
-      showNotification: true,
-      autoStart: true,
-      headPhoneStrategy: HeadPhoneStrategy.pauseOnUnplug,
-    );
+    print('snckssc;s,csccscnkcnknkvnkndvkndknvkndkvnkenvk');
+    print('sncksnkcnknkvnkcwdf2f2f2cscndvkndknvkndkvnkenvk');
+    print('sncksnkcnknkvnkndvkndknvkndwff3fefedckvnkenvk');
+    print('sncksnkcnknkvnkndvkndknvkndkvnkenvkcsdvcevre');
 
-    playlistData = await Api.getReco(widget.songData['id']);
+    final List<Audio> playlistItems = [];
+    print(widget.playlistData);
 
-    additionalSongs = playlistData.map((item) {
-      return Audio.network(
-        item['data'][0]['downloadUrl'][4]['link'],
-        metas: Metas(
-            id: item['data'][0]['id'],
-            title: item['data'][0]['name'],
-            artist: item['data'][0]['primaryArtists'],
-            album: item['data'][0]['album']['name'],
-            image: MetasImage.network(item['data'][0]['image'][2]['link']),
-            extra: item['data'][0]),
-      );
-    }).toList();
+    print(widget.playlistData.length);
 
-    for (var i = 0; i < additionalSongs.length; i++) {
-      audioPlayer.playlist!.insert(i + 1, additionalSongs[i]);
-    }
+    audioPlayer.open(Audio.file(widget.playlistData[widget.index] as String),
+        autoStart: true, showNotification: true);
 
+    // Open the playlist with the created items
+    // audioPlayer.open(
+    //   Playlist(audios: playlistItems),
+    //   showNotification: true,
+    //   autoStart: true,
+    // );
     setState(() {
       gotPlaylistData = true;
     });
   }
 
-  addMoreSongs() async {
-    List<Audio> songsList = [];
-    List<Map<String, dynamic>> SongsDataFromApi = [];
-
-    String lastSongId = playlistData[playlistData.length - 1]['data'][0]['id'];
-
-    SongsDataFromApi = await Api.getReco(lastSongId);
-
-    songsList = SongsDataFromApi.map((item) {
-      return Audio.network(
-        item['data'][0]['downloadUrl'][4]['link'],
-        metas: Metas(
-            id: item['data'][0]['id'],
-            title: item['data'][0]['name'],
-            artist: item['data'][0]['primaryArtists'],
-            album: item['data'][0]['album']['name'],
-            image: MetasImage.network(item['data'][0]['image'][2]['link']),
-            extra: item['data'][0]),
-      );
-    }).toList();
-
-    playlistData.addAll(SongsDataFromApi);
-
-    int len = audioPlayer.playlist!.audios.length;
-    for (int i = 0; i < songsList.length; i++) {
-      audioPlayer.playlist!.insert(i + len, songsList[i]);
-    }
+  shuffle() async {
+    audioPlayer.toggleShuffle();
+    setState(() {
+      isShuffling = !isShuffling;
+    });
   }
 
   playMusic() async {
@@ -171,10 +104,8 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
   }
 
   skipNext() async {
-    // await audioPlayer.pause();
-    favourite = false;
+    await audioPlayer.pause();
     await audioPlayer.next();
-    // favChanger();
   }
 
   seekTo(Duration position) {
@@ -186,15 +117,6 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
     String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
     String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
     return '$twoDigitMinutes:$twoDigitSeconds';
-  }
-
-  bool isShuffling = false;
-
-  shuffle() async {
-    audioPlayer.toggleShuffle();
-    setState(() {
-      isShuffling = !isShuffling;
-    });
   }
 
   bool isExpanded = false;
@@ -211,57 +133,10 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
     });
   }
 
-  void favChecker() async {
-    favourite = false;
-
-    Map<String, dynamic> current = {
-      'id': audioPlayer.current.value?.audio.audio.metas.id,
-      'title': audioPlayer.current.value?.audio.audio.metas.title,
-      'artist': audioPlayer.current.value?.audio.audio.metas.artist,
-      'album': audioPlayer.current.value?.audio.audio.metas.album,
-      'image': audioPlayer.current.value?.audio.audio.metas.image?.path,
-      'audio': audioPlayer.current.value?.audio.audio.path,
-      'songData': audioPlayer.current.value?.audio.audio.metas.extra
-    };
-    DatabaseService db = DatabaseService();
-
-    bool res = await db.isFav(current);
-
-    setState(() {
-      favourite = res;
-    });
-  }
-
-  void favChanger() async {
-    Map<String, dynamic> current = {
-      'id': audioPlayer.current.value?.audio.audio.metas.id,
-      'title': audioPlayer.current.value?.audio.audio.metas.title,
-      'artist': audioPlayer.current.value?.audio.audio.metas.artist,
-      'album': audioPlayer.current.value?.audio.audio.metas.album,
-      'image': audioPlayer.current.value?.audio.audio.metas.image?.path,
-      'audio': audioPlayer.current.value?.audio.audio.path,
-      'songData': audioPlayer.current.value?.audio.audio.metas.extra
-    };
-
-    DatabaseService db = DatabaseService();
-    print(favourite);
-    await db.addRemoveFav(current, favourite);
-
-    setState(() {
-      favourite = !favourite;
-    });
-  }
-
-  Future<void> download_song() async {
-    Download d = Download();
-
-    d.download_song_mp3(audioPlayer.getCurrentAudioextra, context);
-  }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      duration: const Duration(seconds: 5),
+      duration: Duration(seconds: 5),
       height: isExpanded ? MediaQuery.of(context).size.height : null,
       curve: Curves.ease,
       child: isExpanded ? buildExpandedView() : buildCollapsedView(),
@@ -334,8 +209,8 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(5),
                                   image: DecorationImage(
-                                    image:
-                                        NetworkImage(metas?.image?.path ?? ''),
+                                    image: NetworkImage(
+                                        'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Apple_Music_icon.svg/2048px-Apple_Music_icon.svg.png'),
                                     fit: BoxFit.cover,
                                   ),
                                 ),
@@ -405,19 +280,6 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                       icon: const Icon(Icons.skip_next_rounded),
                       onPressed: () => skipNext(),
                     ),
-
-                    IconButton(
-                        onPressed: () {
-                          favChanger();
-                        },
-                        icon: favourite
-                            ? const Icon(
-                                Icons.favorite_rounded,
-                                color: Colors.red,
-                              )
-                            : const Icon(
-                                Icons.favorite_border_rounded,
-                              ))
                   ],
                 ),
                 // const SizedBox(height: 10),
@@ -431,6 +293,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
   }
 
   final controller = PanelController();
+
   bool isOpen = false;
 
   _togglePanel() {
@@ -469,7 +332,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                 ),
                 Center(
                   child: Container(
-                    // padding: EdgeInsets.fromLTRB(0, 0, 0, 15),
+                    // padding: EdgeInsets.fromLTRB(0, 10, 0, 0),
                     width: 38,
                     height: 8,
                     decoration: BoxDecoration(
@@ -480,7 +343,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                 ),
                 const SizedBox(
                   height: 10,
-                ),
+                )
               ],
             ),
           ),
@@ -508,7 +371,8 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
 
                         final title = meta.title ?? '';
 
-                        final imageLink = meta.image?.path ?? '';
+                        final imageLink =
+                            'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Apple_Music_icon.svg/2048px-Apple_Music_icon.svg.png';
                         final primaryArtists = meta.artist ?? '';
 
                         String playingTitle = audioPlayer.getCurrentAudioTitle;
@@ -616,8 +480,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                             direction: FlipDirection.HORIZONTAL,
                             side: CardSide.FRONT,
                             front: Image.network(
-                              metas?.image?.path ??
-                                  '', // Use the current song's image path
+                              'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Apple_Music_icon.svg/2048px-Apple_Music_icon.svg.png', // Use the current song's image path
                               width: 250,
                               height: 250,
                             ),
@@ -673,19 +536,6 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                     // crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       IconButton(
-                          onPressed: () {
-                            favChanger();
-                          },
-                          iconSize: 30,
-                          icon: favourite
-                              ? const Icon(
-                                  Icons.favorite_rounded,
-                                  color: Colors.red,
-                                )
-                              : const Icon(
-                                  Icons.favorite_border_rounded,
-                                )),
-                      IconButton(
                         iconSize: 30,
                         icon: const Icon(Icons.skip_previous_rounded),
                         onPressed: () => skipPrevious(),
@@ -726,13 +576,6 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                                   Icons.repeat,
                                 )),
                     ],
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      download_song();
-                    },
-                    icon: const Icon(Icons.download_rounded),
-                    iconSize: 30,
                   ),
                 ],
               ),

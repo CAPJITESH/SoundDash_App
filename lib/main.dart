@@ -1,7 +1,8 @@
 import 'package:SoundDash/Auth/auth_checker.dart';
 import 'package:SoundDash/services/selected_song_data.dart';
 import 'package:flutter/material.dart';
-import 'package:SoundDash/pages/bottom_navbar.dart';
+// import 'package:SoundDash/pages/bottom_navbar.dart';
+// import 'package:just_audio_background/just_audio_background.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 
@@ -12,6 +13,11 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
   );
+  // await JustAudioBackground.init(
+  //   androidNotificationChannelId: 'com.ryanheise.bg_demo.channel.audio',
+  //   androidNotificationChannelName: 'Audio playback',
+  //   androidNotificationOngoing: true,
+  // );
   runApp(
     ChangeNotifierProvider(
       create: (context) => SelectedSongDataProvider(),

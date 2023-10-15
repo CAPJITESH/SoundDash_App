@@ -28,7 +28,7 @@ class PlayAlbumCard extends StatelessWidget {
         width: MediaQuery.of(context).size.width,
         child: Center(
           child: Card(
-            color: Color.fromARGB(255, 251, 246, 251).withOpacity(0),
+            color: Color.fromARGB(255, 0, 0, 0).withOpacity(0.3),
             child: ListTile(
               leading: Image.network(
                 imageLink,
