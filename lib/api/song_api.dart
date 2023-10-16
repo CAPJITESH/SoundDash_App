@@ -116,29 +116,73 @@ class Api {
     }
   }
 
-  static Future<String> getLyrics(String id) async {
+  static Future<String> getLyrics(Map<String, dynamic> songData) async {
     try {
-      final Uri lyricsUrl = Uri.https(
-        'www.jiosaavn.com',
-        '/api.php?__call=lyrics.getLyrics&lyrics_id=$id&ctx=web6dot0&api_version=4&_format=json',
-      );
-      final Response res =
-          await get(lyricsUrl, headers: {'Accept': 'application/json'});
+      if (songData['hasLyrics'] == true) {
+        int id = songData['id'];
+        final Uri lyricsUrl = Uri.https(
+          'www.jiosaavn.com',
+          '/api.php?__call=lyrics.getLyrics&lyrics_id=$id&ctx=web6dot0&api_version=4&_format=json',
+        );
+        final Response res =
+            await get(lyricsUrl, headers: {'Accept': 'application/json'});
 
-      // print(res.body);
+        // print(res.body);
 
-      final List<String> rawLyrics = res.body.split('-->');
-      Map fetchedLyrics = {};
-      if (rawLyrics.length > 1) {
-        fetchedLyrics = json.decode(rawLyrics[1]) as Map;
+        final List<String> rawLyrics = res.body.split('-->');
+        Map fetchedLyrics = {};
+        if (rawLyrics.length > 1) {
+          fetchedLyrics = json.decode(rawLyrics[1]) as Map;
+        } else {
+          fetchedLyrics = json.decode(rawLyrics[0]) as Map;
+        }
+        String lyrics =
+            fetchedLyrics['lyrics'].toString().replaceAll('<br>', '\n');
+
+        return lyrics;
       } else {
-        fetchedLyrics = json.decode(rawLyrics[0]) as Map;
+        String lyrics =
+            await getMusixMatchLyrics(title: "perfect", artist: 'ed sheeran')
+                as String;
+        return lyrics;
       }
-      final String lyrics =
-          fetchedLyrics['lyrics'].toString().replaceAll('<br>', '\n');
-      return lyrics;
     } catch (e) {
       print("this is the error : $e");
+      return '';
+    }
+  }
+
+  static Future<String> getLyricsLink(String song, String artist) async {
+    const String authority = 'www.musixmatch.com';
+    final String unencodedPath = '/search/$song $artist';
+    final Response res = await get(Uri.https(authority, unencodedPath));
+    if (res.statusCode != 200) return '';
+    final RegExpMatch? result =
+        RegExp(r'href=\"(\/lyrics\/.*?)\"').firstMatch(res.body);
+    return result == null ? '' : result[1]!;
+  }
+
+  static Future<String> scrapLink(String unencodedPath) async {
+    const String authority = 'www.musixmatch.com';
+    final Response res = await get(Uri.https(authority, unencodedPath));
+    if (res.statusCode != 200) return '';
+    final List<String?> lyrics = RegExp(
+      r'<span class=\"lyrics__content__ok\">(.*?)<\/span>',
+      dotAll: true,
+    ).allMatches(res.body).map((m) => m[1]).toList();
+
+    return lyrics.isEmpty ? '' : lyrics.join('\n');
+  }
+
+  static Future<String> getMusixMatchLyrics({
+    required String title,
+    required String artist,
+  }) async {
+    try {
+      final String link = await getLyricsLink(title, artist);
+      final String lyrics = await scrapLink(link);
+      return lyrics;
+    } catch (e) {
       return '';
     }
   }

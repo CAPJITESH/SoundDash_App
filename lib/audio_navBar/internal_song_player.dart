@@ -474,20 +474,12 @@ class _InternalSongsPlayerState extends State<InternalSongsPlayer> {
                       final metas = audio?.audio.metas;
                       return Column(
                         children: [
-                          FlipCard(
-                            fill: Fill.fillBack,
-                            key: cardKey,
-                            direction: FlipDirection.HORIZONTAL,
-                            side: CardSide.FRONT,
-                            front: Image.network(
+                           Image.network(
                               'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Apple_Music_icon.svg/2048px-Apple_Music_icon.svg.png', // Use the current song's image path
                               width: 250,
                               height: 250,
                             ),
-                            back: GetLyrics(
-                                id: audioPlayer.current.value?.audio.audio.metas
-                                    .id as String),
-                          ),
+                            
                           // const SizedBox(height: 10),
                           Text(
                             metas?.title ?? '', // Use the current song's title

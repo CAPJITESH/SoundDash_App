@@ -5,6 +5,7 @@ import 'package:flip_card/flip_card.dart';
 import 'package:flutter/material.dart';
 import 'package:SoundDash/services/database.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'package:palette_generator/palette_generator.dart';
 
 class PlaylistPlayer extends StatefulWidget {
   final List<dynamic> playlistData;
@@ -63,6 +64,7 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
     });
 
     audioPlayer.onReadyToPlay.listen((audioInfo) {
+      extractColor();
       favChecker();
     });
   }
@@ -218,6 +220,20 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
     });
   }
 
+  Color extracted_color = Colors.black;
+
+  Future<void> extractColor() async {
+    final PaletteGenerator paletteGenerator =
+        await PaletteGenerator.fromImageProvider(
+            NetworkImage(audioPlayer
+                .current.value?.audio.audio.metas.image?.path as String),
+            size: const Size(200, 200));
+
+    setState(() {
+      extracted_color = paletteGenerator.dominantColor!.color;
+    });
+  }
+
   void toggleCollapsed() {
     setState(() {
       isExpanded = !isExpanded;
@@ -243,7 +259,7 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
         onTap: toggleExpanded,
         child: Container(
           height: 78,
-          color: const Color.fromARGB(255, 68, 12, 64),
+          color: Color.fromARGB(255, 36, 5, 34),
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: SingleChildScrollView(
             child: Column(
@@ -396,9 +412,9 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
     );
   }
 
-final controller = PanelController();
+  final controller = PanelController();
 
-bool isOpen = false;
+  bool isOpen = false;
 
   _togglePanel() {
     setState(() {
@@ -414,13 +430,13 @@ bool isOpen = false;
       // color: const Color.fromARGB(0, 163, 163, 163),
       child: Column(
         children: [
-          const SizedBox(
-            height: 10,
-          ),
-          GestureDetector(
+          InkWell(
             onTap: _togglePanel,
             child: Column(
               children: [
+                const SizedBox(
+                  height: 10,
+                ),
                 Container(
                   // width: MediaQuery.of(context).size.width,
                   padding: const EdgeInsets.only(bottom: 7),
@@ -445,7 +461,9 @@ bool isOpen = false;
                     ),
                   ),
                 ),
-                const SizedBox(height: 10,)
+                const SizedBox(
+                  height: 10,
+                )
               ],
             ),
           ),
@@ -484,8 +502,8 @@ bool isOpen = false;
                           key: ValueKey<Audio>(playlist[index]),
                           direction: DismissDirection.horizontal,
                           onDismissed: (direction) {
+                            // playlist.removeAt(index);
                             audioPlayer.playlist!.removeAtIndex(index);
-                            // playlistData.removeAt(index);
                           },
                           background: Container(
                             color: Colors.red,
@@ -557,7 +575,17 @@ bool isOpen = false;
         body: Stack(
           children: [
             Container(
-              color: Color.fromARGB(255, 34, 10, 41),
+              decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                    extracted_color.withOpacity(1),
+                    // Colors.black.withOpacity(0.4),
+                    Colors.black.withOpacity(0.6),
+                    Colors.black.withOpacity(0.8),
+                    Colors.black
+                  ])),
               alignment: Alignment.center,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -581,14 +609,13 @@ bool isOpen = false;
                             direction: FlipDirection.HORIZONTAL,
                             side: CardSide.FRONT,
                             front: Image.network(
-                              metas?.image?.path ??
-                                  '', // Use the current song's image path
-                              width: 250,
-                              height: 250,
-                            ),
+                                metas?.image?.path ??
+                                    '', // Use the current song's image path
+                                width: 300,
+                                height: 300),
                             back: GetLyrics(
-                                id: audioPlayer.current.value?.audio.audio.metas
-                                    .id as String),
+                                songData: audioPlayer.current.value!.audio.audio
+                                    .metas.extra as Map<String, dynamic>),
                           ),
                           // const SizedBox(height: 10),
                           Text(

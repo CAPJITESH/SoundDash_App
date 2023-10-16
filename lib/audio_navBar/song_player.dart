@@ -447,13 +447,13 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
       // color: const Color.fromARGB(0, 163, 163, 163),
       child: Column(
         children: [
-          const SizedBox(
-            height: 10,
-          ),
-          GestureDetector(
+          InkWell(
             onTap: _togglePanel,
             child: Column(
               children: [
+                const SizedBox(
+                  height: 10,
+                ),
                 Container(
                   // width: MediaQuery.of(context).size.width,
                   padding: const EdgeInsets.only(bottom: 7),
@@ -622,8 +622,8 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                               height: 250,
                             ),
                             back: GetLyrics(
-                                id: audioPlayer.current.value?.audio.audio.metas
-                                    .id as String),
+                                songData: audioPlayer.current.value?.audio.audio
+                                    .metas.extra as Map<String, dynamic>),
                           ),
                           // const SizedBox(height: 10),
                           Text(

@@ -53,6 +53,7 @@ dependencies:
   floating_snackbar: ^1.0.3+1
   sliding_up_panel: ^2.0.0+1 
   audio_session: ^0.1.16
+  palette_generator: ^0.3.3+3
   # just_audio_background: ^0.0.1-beta.10
   # metadata_god: ^0.5.0
   # flutter_rust_bridge: ^1.82.1
