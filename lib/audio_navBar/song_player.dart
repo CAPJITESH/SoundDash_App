@@ -7,6 +7,7 @@ import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:flip_card/flip_card.dart';
 import 'package:flutter/material.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'package:palette_generator/palette_generator.dart';
 // import 'package:metadata_god/metadata_god.dart';
 
 class BottomSongPlayer extends StatefulWidget {
@@ -66,6 +67,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
     });
 
     audioPlayer.onReadyToPlay.listen((audioInfo) {
+      extractColor();
       favChecker();
       if (audioPlayer.readingPlaylist!.currentIndex ==
           audioPlayer.playlist!.audios.length - 1) {
@@ -249,6 +251,20 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
 
     setState(() {
       favourite = !favourite;
+    });
+  }
+
+  Color extracted_color = Colors.black;
+
+  Future<void> extractColor() async {
+    final PaletteGenerator paletteGenerator =
+        await PaletteGenerator.fromImageProvider(
+            NetworkImage(audioPlayer
+                .current.value?.audio.audio.metas.image?.path as String),
+            size: const Size(200, 200));
+
+    setState(() {
+      extracted_color = paletteGenerator.dominantColor!.color;
     });
   }
 
@@ -592,7 +608,17 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
         body: Stack(
           children: [
             Container(
-              color: Color.fromARGB(255, 34, 10, 41),
+              decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                    extracted_color.withOpacity(1),
+                    // Colors.black.withOpacity(0.4),
+                    Colors.black.withOpacity(0.6),
+                    Colors.black.withOpacity(0.8),
+                    Colors.black
+                  ])),
               alignment: Alignment.center,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -618,8 +644,8 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                             front: Image.network(
                               metas?.image?.path ??
                                   '', // Use the current song's image path
-                              width: 250,
-                              height: 250,
+                              width: 300,
+                              height: 300,
                             ),
                             back: GetLyrics(
                                 songData: audioPlayer.current.value?.audio.audio
