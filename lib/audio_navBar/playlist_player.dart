@@ -582,9 +582,9 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
                       colors: [
                     extracted_color.withOpacity(1),
                     // Colors.black.withOpacity(0.4),
-                    Colors.black.withOpacity(0.6),
-                    Colors.black.withOpacity(0.8),
-                    Colors.black
+                    Color.fromRGBO(34, 10, 41, 0.6),
+                    // Colors.black.withOpacity(0.8),
+                    Color.fromRGBO(34, 10, 41, 1)
                   ])),
               alignment: Alignment.center,
               child: Column(

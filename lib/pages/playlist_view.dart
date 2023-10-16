@@ -3,6 +3,7 @@ import 'package:SoundDash/cards/play_album_card.dart';
 import 'package:SoundDash/services/selected_song_data.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:palette_generator/palette_generator.dart';
 
 class PlaylistView extends StatefulWidget {
   final Map<String, dynamic> albumData;
@@ -16,6 +17,26 @@ class PlaylistView extends StatefulWidget {
 }
 
 class _PlaylistViewState extends State<PlaylistView> {
+  @override
+  void initState() {
+    // TODO: implement initState
+    extractColor();
+    super.initState();
+  }
+
+  Color extracted_color = Colors.black;
+
+  Future<void> extractColor() async {
+    final PaletteGenerator paletteGenerator =
+        await PaletteGenerator.fromImageProvider(
+            NetworkImage(widget.albumData['image'] as String),
+            size: const Size(200, 200));
+
+    setState(() {
+      extracted_color = paletteGenerator.dominantColor!.color;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     String artistNames = '';
@@ -50,8 +71,8 @@ class _PlaylistViewState extends State<PlaylistView> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              const Color.fromARGB(255, 70, 1, 50),
-              const Color.fromARGB(255, 50, 1, 40),
+              extracted_color,
+              Color.fromARGB(255, 28, 15, 25),
               const Color.fromARGB(255, 10, 1, 20),
               Colors.black.withOpacity(1),
             ],
