@@ -265,6 +265,14 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
 
     setState(() {
       extracted_color = paletteGenerator.dominantColor!.color;
+  //     final int darkenValue = 30;
+
+  //     extracted_color = Color.fromARGB(
+  //   extracted_color.alpha,
+  //   (extracted_color.red - darkenValue).clamp(0, 255),
+  //   (extracted_color.green - darkenValue).clamp(0, 255),
+  //   (extracted_color.blue - darkenValue).clamp(0, 255),
+  // );
     });
   }
 
@@ -293,7 +301,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
         onTap: toggleExpanded,
         child: Container(
           height: 78,
-          color: const Color.fromARGB(255, 68, 12, 64),
+          color: extracted_color,
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: SingleChildScrollView(
             child: Column(
@@ -313,8 +321,8 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                               PaddleSliderValueIndicatorShape(),
                           // Set padding to zero
                           trackShape: RoundedRectSliderTrackShape(),
-                          activeTrackColor: Color.fromARGB(255, 71, 14, 121),
-                          inactiveTrackColor: Color.fromARGB(255, 126, 71, 154),
+                          activeTrackColor: Color.fromRGBO(97, 97, 97, 1),
+                          inactiveTrackColor: Colors.grey,
                           thumbColor: Colors.white,
                           overlayColor: Color.fromARGB(30, 71, 14, 121),
                         ),
@@ -615,9 +623,9 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                       colors: [
                     extracted_color.withOpacity(1),
                     // Colors.black.withOpacity(0.4),
-                    Color.fromRGBO(34, 10, 41, 0.6),
+                    // Color.fromRGBO(24, 7, 30, 0.6),
                     // Colors.black.withOpacity(0.8),
-                    Color.fromRGBO(34, 10, 41, 1)
+                    Color.fromRGBO(16, 5, 19, 1)
                   ])),
               alignment: Alignment.center,
               child: Column(
@@ -765,7 +773,7 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
             ),
             if (gotPlaylistData)
               SlidingUpPanel(
-                color: Color.fromARGB(255, 34, 10, 41).withOpacity(0.75),
+                color: Color.fromRGBO(16, 5, 19, 1).withOpacity(0.75),
                 controller: controller,
                 minHeight: 55,
                 maxHeight: MediaQuery.of(context).size.height * 0.5,

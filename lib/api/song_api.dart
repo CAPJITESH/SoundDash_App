@@ -142,7 +142,7 @@ class Api {
         return lyrics;
       } else {
         String lyrics =
-            await getMusixMatchLyrics(title: "perfect", artist: 'ed sheeran')
+            await getMusixMatchLyrics(title: songData['name'], artist: songData['primaryArtists'])
                 as String;
         return lyrics;
       }

@@ -1,9 +1,6 @@
-
-import 'package:SoundDash/services/selected_song_data.dart';
+import 'package:SoundDash/pages/fav_page.dart';
+import 'package:SoundDash/pages/history_view.dart';
 import 'package:flutter/material.dart';
-import 'package:SoundDash/services/database.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:provider/provider.dart';
 
 class Library extends StatefulWidget {
   const Library({super.key});
@@ -13,11 +10,23 @@ class Library extends StatefulWidget {
 }
 
 class _LibraryState extends State<Library> {
+  bool isPlaylistVisible = false;
+  String opened = "";
+
+  void ScreenName(String name) {
+    setState(() {
+      opened = name;
+    });
+  }
+
+  void toggleScreen() {
+    setState(() {
+      isPlaylistVisible = !isPlaylistVisible;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final selectedSongDataProvider =
-        Provider.of<SelectedSongDataProvider>(context, listen: false);
-
     return Scaffold(
       body: Stack(
         children: [
@@ -35,53 +44,44 @@ class _LibraryState extends State<Library> {
                 ],
               ),
             ),
+            height: MediaQuery.of(context).size.height,
+            child: Column(
+              children: [
+                ListTile(
+                  // tileColor: Colors.amber,
+                  title: Text("History"),
+                  onTap: () {
+                    // print('pressedddddddddddddddddddddd');
+                    ScreenName('History');
+                    toggleScreen();
+                  },
+                ),
+                ListTile(
+                  // tileColor: Colors.amber,
+                  title: Text("Favorites"),
+                  onTap: () {
+                    // print('pressedddddddddddddddddddddd');
+                    ScreenName('Favorites');
+                    toggleScreen();
+                  },
+                )
+              ],
+            ),
           ),
-          StreamBuilder<QuerySnapshot>(
-            stream: DatabaseService().getHistoryStream(),
-            builder:
-                (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
+          if (isPlaylistVisible)
 
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return const Center(
-                  child: Text('No history data available.'),
-                );
-              }
-
-              return ListView.builder(
-                itemCount: snapshot.data!.docs.length,
-                itemBuilder: (BuildContext context, int index) {
-
-                  List<Map<String, dynamic>> historyDataList = snapshot.data!.docs.map((QueryDocumentSnapshot historyDoc) {
-                    Map<String, dynamic> data = historyDoc.data() as Map<String, dynamic>;
-                    Map<String, dynamic> songData = data['songData'] as Map<String, dynamic>;
-
-                    return songData;
-                  }).toList();
-
-                  QueryDocumentSnapshot historyDoc = snapshot.data!.docs[index];
-                  Map<String, dynamic> data =
-                      historyDoc.data() as Map<String, dynamic>;
-
-                  return InkWell(
-                    onTap: () {
-                      selectedSongDataProvider.startPlaylistSongs(
-                          historyDataList, index);
-                    },
-                    child: ListTile(
-                      leading: Image.network(data['image']),
-                      title: Text(data['title']),
-                      subtitle: Text(data['artist']),
-                    ),
-                  );
+            if(opened == 'History')
+              History(
+                onClose: (returnValue) {
+                  toggleScreen();
                 },
-              );
-            },
-          ),
+              )
+            else
+              FavoritePage(
+                onClose: (returnValue) {
+                  toggleScreen();
+                },
+              ) 
         ],
       ),
     );

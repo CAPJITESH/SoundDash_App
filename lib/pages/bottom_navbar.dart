@@ -2,7 +2,6 @@ import 'package:SoundDash/audio_navBar/internal_song_player.dart';
 import 'package:SoundDash/audio_navBar/song_player.dart';
 import 'package:SoundDash/audio_navBar/playlist_player.dart';
 import 'package:SoundDash/pages/home.dart';
-import 'package:SoundDash/pages/internal_songs.dart';
 import 'package:SoundDash/pages/library.dart';
 import 'package:SoundDash/pages/search.dart';
 import 'package:SoundDash/services/selected_song_data.dart';
@@ -62,10 +61,7 @@ class _NavbarState extends State<Navbar> {
               1,
               Search(),
             ),
-            renderView(
-              2,
-              MyApp(),
-            ),
+
             renderView(
               3,
               const Library(),
@@ -89,10 +85,6 @@ class _NavbarState extends State<Navbar> {
           BottomNavigationBarItem(
             icon: Icon(Icons.search_outlined),
             label: "Search",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.library_music),
-            label: "Internal",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.library_music_outlined),
