@@ -63,7 +63,7 @@ class _NavbarState extends State<Navbar> {
             ),
 
             renderView(
-              3,
+              2,
               const Library(),
             ),
             if (selectedSongData != null) playerWidget,

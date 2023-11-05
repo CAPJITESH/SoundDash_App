@@ -6,6 +6,7 @@ import 'package:SoundDash/services/get_lyrics.dart';
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:flip_card/flip_card.dart';
 import 'package:flutter/material.dart';
+import 'package:marquee/marquee.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:palette_generator/palette_generator.dart';
 // import 'package:metadata_god/metadata_god.dart';
@@ -265,14 +266,14 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
 
     setState(() {
       extracted_color = paletteGenerator.dominantColor!.color;
-  //     final int darkenValue = 30;
+      //     final int darkenValue = 30;
 
-  //     extracted_color = Color.fromARGB(
-  //   extracted_color.alpha,
-  //   (extracted_color.red - darkenValue).clamp(0, 255),
-  //   (extracted_color.green - darkenValue).clamp(0, 255),
-  //   (extracted_color.blue - darkenValue).clamp(0, 255),
-  // );
+      //     extracted_color = Color.fromARGB(
+      //   extracted_color.alpha,
+      //   (extracted_color.red - darkenValue).clamp(0, 255),
+      //   (extracted_color.green - darkenValue).clamp(0, 255),
+      //   (extracted_color.blue - darkenValue).clamp(0, 255),
+      // );
     });
   }
 
@@ -600,6 +601,12 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
     );
   }
 
+  Future<String> getArtist() async {
+    // Simulate some asynchronous operation to fetch artist data
+    String data = audioPlayer.current.value?.audio.audio.metas.artist as String;
+    return data;
+  }
+
   GlobalKey<FlipCardState> cardKey = GlobalKey<FlipCardState>();
 
   Widget buildExpandedView() {
@@ -612,7 +619,32 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
         return false;
       },
       child: Scaffold(
-        extendBody: true,
+        appBar: AppBar(
+          leading: IconButton(
+            onPressed: toggleExpanded,
+            icon: const Icon(Icons.arrow_back_rounded),
+            iconSize: 25,
+          ),
+          title: Column(children: [
+            Text(
+              audioPlayer.current.value?.audio.audio.metas.title ?? '',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(
+              height: 3,
+            ),
+            const Text(
+              '• From Jio Saavn',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            )
+          ]),
+          elevation: 0.0,
+          centerTitle: true,
+          backgroundColor: extracted_color,
+        ),
+        // extendBody: true,
         body: Stack(
           children: [
             Container(
@@ -625,17 +657,12 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                     // Colors.black.withOpacity(0.4),
                     // Color.fromRGBO(24, 7, 30, 0.6),
                     // Colors.black.withOpacity(0.8),
-                    Color.fromRGBO(16, 5, 19, 1)
+                    const Color.fromRGBO(16, 5, 19, 1)
                   ])),
               alignment: Alignment.center,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                // mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  IconButton(
-                    onPressed: toggleExpanded,
-                    icon: const Icon(Icons.arrow_drop_down_outlined),
-                    iconSize: 30,
-                  ),
                   StreamBuilder<Playing?>(
                     stream: audioPlayer.current,
                     builder: (context, snapshot) {
@@ -644,33 +671,108 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                       final metas = audio?.audio.metas;
                       return Column(
                         children: [
+                          SizedBox(
+                            height: 30,
+                          ),
                           FlipCard(
                             fill: Fill.fillBack,
                             key: cardKey,
                             direction: FlipDirection.HORIZONTAL,
                             side: CardSide.FRONT,
-                            front: Image.network(
-                              metas?.image?.path ??
-                                  '', // Use the current song's image path
-                              width: 300,
-                              height: 300,
+                            front: ClipRRect(
+                              borderRadius: BorderRadius.circular(
+                                  15), // Adjust the radius as needed
+                              child: Image.network(
+                                metas?.image?.path ??
+                                    '', // Use the current song's image path
+                                width: 320,
+                                height: 320,
+                                fit: BoxFit
+                                    .cover, // Ensure the image covers the entire area
+                              ),
                             ),
                             back: GetLyrics(
                                 songData: audioPlayer.current.value?.audio.audio
                                     .metas.extra as Map<String, dynamic>),
                           ),
                           // const SizedBox(height: 10),
-                          Text(
-                            metas?.title ?? '', // Use the current song's title
-                            style: const TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold),
+                          const SizedBox(height: 20),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 20, right: 20),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: 230,
+                                      child: Text(
+                                        metas?.title ??
+                                            '', // Use the current song's title
+                                        style: const TextStyle(
+                                            fontSize: 19,
+                                            fontWeight: FontWeight.bold),
+                                        textAlign: TextAlign.left,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      height: 10,
+                                    ),
+                                    // if(artistText != '')
+                                    Container(
+                                      width: 230,
+                                      height: 30,
+                                      child: FutureBuilder<String>(
+                                        future: getArtist(),
+                                        builder: (BuildContext context,
+                                            AsyncSnapshot<String> snapshot) {
+                                          if (snapshot.connectionState ==
+                                              ConnectionState.waiting) {
+                                            return CircularProgressIndicator(); // Placeholder while loading
+                                          } else if (snapshot.hasError) {
+                                            return Text(
+                                                'Error: ${snapshot.error}');
+                                          } else {
+                                            return Marquee(
+                                              text: snapshot.data ?? '',
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                color: Colors.grey,
+                                              ),
+                                              scrollAxis: Axis.horizontal,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              blankSpace: 100,
+                                              velocity: 40,
+                                              pauseAfterRound:
+                                                  const Duration(seconds: 1),
+                                            );
+                                          }
+                                        },
+                                      ),
+                                    )
+                                  ],
+                                ),
+                                IconButton(
+                                    onPressed: () {
+                                      favChanger();
+                                    },
+                                    iconSize: 30,
+                                    icon: favourite
+                                        ? const Icon(
+                                            Icons.favorite_rounded,
+                                            color: Colors.red,
+                                          )
+                                        : const Icon(
+                                            Icons.favorite_border_rounded,
+                                          )),
+                              ],
+                            ),
                           ),
-                          Text(
-                            metas?.artist ??
-                                '', // Use the current song's artist
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          const SizedBox(height: 10),
+                          // const SizedBox(height: 10),
                         ],
                       );
                     },
@@ -679,13 +781,36 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                   ValueListenableBuilder<Duration>(
                     valueListenable: _currentPositionNotifier,
                     builder: (context, position, _) {
-                      return Slider(
-                        value: position.inSeconds.toDouble(),
-                        min: 0,
-                        max: _totalDurationNotifier.value.inSeconds.toDouble(),
-                        onChanged: (value) {
-                          seekTo(Duration(seconds: value.toInt()));
-                        },
+                      return Theme(
+                        data: Theme.of(context).copyWith(
+                          sliderTheme: const SliderThemeData(
+                            trackHeight: 5.0,
+                            thumbShape:
+                                RoundSliderThumbShape(enabledThumbRadius: 11.0),
+                            overlayShape:
+                                RoundSliderOverlayShape(overlayRadius: 11.0),
+                            valueIndicatorShape:
+                                PaddleSliderValueIndicatorShape(),
+                            // Set padding to zero
+                            trackShape: RoundedRectSliderTrackShape(),
+                            activeTrackColor: Color.fromRGBO(97, 97, 97, 1),
+                            inactiveTrackColor: Colors.grey,
+                            thumbColor: Color.fromARGB(255, 231, 231, 231),
+                            overlayColor: Color.fromARGB(30, 71, 14, 121),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 10, right: 10),
+                          child: Slider(
+                            value: position.inSeconds.toDouble(),
+                            min: 0,
+                            max: _totalDurationNotifier.value.inSeconds
+                                .toDouble(),
+                            onChanged: (value) {
+                              seekTo(Duration(seconds: value.toInt()));
+                            },
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -693,87 +818,83 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
                   ValueListenableBuilder<Duration>(
                     valueListenable: _currentPositionNotifier,
                     builder: (context, position, _) {
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(formatDuration(position)),
-                          Text(formatDuration(_totalDurationNotifier.value)),
-                        ],
+                      return Padding(
+                        padding: const EdgeInsets.only(left: 20, right: 20),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(formatDuration(position)),
+                            Text(formatDuration(_totalDurationNotifier.value)),
+                          ],
+                        ),
                       );
                     },
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    // crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      IconButton(
-                          onPressed: () {
-                            favChanger();
-                          },
-                          iconSize: 30,
-                          icon: favourite
-                              ? const Icon(
-                                  Icons.favorite_rounded,
-                                  color: Colors.red,
-                                )
-                              : const Icon(
-                                  Icons.favorite_border_rounded,
-                                )),
-                      IconButton(
-                        iconSize: 30,
-                        icon: const Icon(Icons.skip_previous_rounded),
-                        onPressed: () => skipPrevious(),
-                      ),
-                      StreamBuilder<bool>(
-                        stream: audioPlayer.isPlaying,
-                        builder: (context, snapshot) {
-                          final isPlaying = snapshot.data ?? false;
-                          return IconButton(
-                            iconSize: 30,
-                            icon: Icon(
-                              isPlaying
-                                  ? Icons.pause_rounded
-                                  : Icons.play_arrow_rounded,
-                            ),
-                            onPressed: () =>
-                                isPlaying ? pauseMusic() : playMusic(),
-                          );
-                        },
-                      ),
-                      IconButton(
-                        iconSize: 30,
-                        color:
-                            gotPlaylistData ? Colors.white : Colors.grey[500],
-                        icon: const Icon(Icons.skip_next_rounded),
-                        onPressed: () => skipNext(),
-                      ),
-                      IconButton(
-                          onPressed: () {
-                            shuffle();
-                          },
-                          iconSize: 30,
-                          icon: isShuffling
-                              ? const Icon(
-                                  Icons.shuffle_rounded,
-                                )
-                              : const Icon(
-                                  Icons.repeat,
-                                )),
-                    ],
+                  SizedBox(
+                    height: 20,
                   ),
-                  IconButton(
-                    onPressed: () {
-                      download_song();
-                    },
-                    icon: const Icon(Icons.download_rounded),
-                    iconSize: 30,
+                  Padding(
+                    padding: const EdgeInsets.only(left: 10, right: 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      // crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            download_song();
+                          },
+                          icon: const Icon(Icons.download_rounded),
+                          iconSize: 30,
+                        ),
+                        IconButton(
+                          iconSize: 30,
+                          icon: const Icon(Icons.skip_previous_rounded),
+                          onPressed: () => skipPrevious(),
+                        ),
+                        StreamBuilder<bool>(
+                          stream: audioPlayer.isPlaying,
+                          builder: (context, snapshot) {
+                            final isPlaying = snapshot.data ?? false;
+                            return IconButton(
+                              iconSize: 30,
+                              icon: Icon(
+                                isPlaying
+                                    ? Icons.pause_rounded
+                                    : Icons.play_arrow_rounded,
+                              ),
+                              onPressed: () =>
+                                  isPlaying ? pauseMusic() : playMusic(),
+                            );
+                          },
+                        ),
+                        IconButton(
+                          iconSize: 30,
+                          color:
+                              gotPlaylistData ? Colors.white : Colors.grey[500],
+                          icon: const Icon(Icons.skip_next_rounded),
+                          onPressed: () => skipNext(),
+                        ),
+                        IconButton(
+                            onPressed: () {
+                              shuffle();
+                            },
+                            iconSize: 30,
+                            icon: isShuffling
+                                ? const Icon(
+                                    Icons.shuffle_rounded,
+                                  )
+                                : const Icon(
+                                    Icons.repeat,
+                                  )),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
             if (gotPlaylistData)
               SlidingUpPanel(
-                color: Color.fromRGBO(16, 5, 19, 1).withOpacity(0.75),
+                color: const Color.fromRGBO(16, 5, 19, 1).withOpacity(0.75),
                 controller: controller,
                 minHeight: 55,
                 maxHeight: MediaQuery.of(context).size.height * 0.5,

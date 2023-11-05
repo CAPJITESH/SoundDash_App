@@ -18,6 +18,8 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  GlobalKey<ScaffoldState> _scafoldKey = GlobalKey<ScaffoldState>();
+
   Future<Map<String, dynamic>> fetchApiResponse() async {
     HomeDataFetcher homeInst = HomeDataFetcher();
     // print(homeInst.fetchData());
@@ -48,6 +50,57 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scafoldKey,
+      // appBar: AppBar(
+      //   title: const Text(
+      //     "SoundDash",
+      //     style: TextStyle(fontSize: 25),
+      //   ),
+      //   centerTitle: true,
+      //   backgroundColor: Color.fromARGB(255, 35, 0, 25),
+      //   elevation: 0.0,
+
+      // ),
+      drawer: Drawer(
+        child: Container(
+          color: Colors.black
+              .withOpacity(0.5), // Adjust the opacity value as needed
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              Container(
+                height: 60,
+                child: const DrawerHeader(
+                  decoration: BoxDecoration(
+                    color: Color.fromARGB(
+                        255, 62, 1, 44), // Purple color for the header
+                  ),
+                  child: Center(
+                    child: Text(
+                      'SoundDash',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.exit_to_app),
+                title: const Text(
+                  'Sign Out',
+                  style: TextStyle(
+                    color: Color.fromARGB(
+                        255, 255, 255, 255), // Purple color for the text
+                  ),
+                ),
+                onTap: auth.HandleGoogleSignOut,
+              ),
+            ],
+          ),
+        ),
+      ),
       body: SafeArea(
         child: Stack(
           children: [
@@ -70,11 +123,32 @@ class _HomeState extends State<Home> {
               child: Column(
                 children: [
                   const SizedBox(
-                    height: 30,
+                    height: 10,
                   ),
-                  ElevatedButton(
-                      onPressed: auth.HandleGoogleSignOut,
-                      child: const Text('SignOut')),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                          onPressed: () {
+                            _scafoldKey.currentState?.openDrawer();
+                          },
+                          icon: Icon(
+                            Icons.menu_rounded,
+                            size: 30,
+                          )),
+                      Container(
+                        width: 300,
+                        padding: EdgeInsets.only(left: 60),
+                        // alignment: Alignment.center,
+                        child: const Text(
+                          "SoundDash",
+                          style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.left,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 15,),
                   Container(
                     width: MediaQuery.of(context).size.width,
                     // color: Colors.white,
@@ -97,7 +171,7 @@ class _HomeState extends State<Home> {
                   ),
 
                   const SizedBox(
-                    height: 20,
+                    height: 30,
                   ),
 
                   StreamBuilder<QuerySnapshot>(
@@ -154,7 +228,6 @@ class _HomeState extends State<Home> {
                                 children: [
                                   for (int i = 0; i < listOfFav.length; i++)
                                     FavouriteCard(
-                                      
                                       favPlaylist: listOfFav,
                                       index: i,
                                     ),

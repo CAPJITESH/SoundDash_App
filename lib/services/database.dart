@@ -76,4 +76,27 @@ class DatabaseService {
         .orderBy('timestamp', descending: true)
         .snapshots();
   }
+  // Playlists logic
+
+Future <void> createPlaylist(String playlistName) async {
+  // Add a new document to the 'playlists' collection
+  usersCollection.doc(uid).collection('playlists').add({
+    'name': playlistName,
+    'songs': [] // Initialize with an empty array of songs
+  });
 }
+
+void addSongToPlaylist(String playlistId, Map<String, dynamic> songData) {
+  // Get the playlist document reference
+  DocumentReference playlistRef = usersCollection.doc(uid).collection('playlists').doc(playlistId);
+
+  // Update the 'songs' field with the new song
+  playlistRef.update({
+    'songs': FieldValue.arrayUnion([songData]) // Convert song to a map
+  });
+}
+
+}
+
+
+
