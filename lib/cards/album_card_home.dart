@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:SoundDash/services/formatter.dart';
 
 class AlbumCard extends StatelessWidget {
   final Map<String, dynamic> albumData;
@@ -8,7 +9,7 @@ class AlbumCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final albumName = albumData['title'];
+    final albumName = htmlFormatter.removeHtmlTags(albumData['title']);
     String artistNames = '';
     try{
     if (albumData['more_info'] != null) {
@@ -17,7 +18,7 @@ class AlbumCard extends StatelessWidget {
           artistNames += item['name'];
         });
       } else {
-        artistNames = albumData['subtitle'];
+        artistNames = htmlFormatter.removeHtmlTags(albumData['subtitle']);
       }
     }}
     catch (e) {

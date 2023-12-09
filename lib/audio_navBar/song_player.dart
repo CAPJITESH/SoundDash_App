@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:marquee/marquee.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:palette_generator/palette_generator.dart';
+import 'package:SoundDash/services/formatter.dart';
+
 // import 'package:metadata_god/metadata_god.dart';
 
 class BottomSongPlayer extends StatefulWidget {
@@ -93,9 +95,9 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
       widget.songData['downloadUrl'][4]['link'],
       metas: Metas(
           id: widget.songData['id'],
-          title: widget.songData['name'],
-          artist: widget.songData['primaryArtists'],
-          album: widget.songData['album']['name'],
+          title: htmlFormatter.removeHtmlTags(widget.songData['name'] as String),
+          artist: htmlFormatter.removeHtmlTags(widget.songData['primaryArtists'] as String),
+          album: htmlFormatter.removeHtmlTags(widget.songData['album']['name'] as String),
           image: MetasImage.network(widget.songData['image'][2]['link']),
           extra: widget.songData),
     );
@@ -115,9 +117,9 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
         item['data'][0]['downloadUrl'][4]['link'],
         metas: Metas(
             id: item['data'][0]['id'],
-            title: item['data'][0]['name'],
-            artist: item['data'][0]['primaryArtists'],
-            album: item['data'][0]['album']['name'],
+            title: htmlFormatter.removeHtmlTags(item['data'][0]['name'] as String),
+            artist: htmlFormatter.removeHtmlTags(item['data'][0]['primaryArtists'] as String),
+            album: htmlFormatter.removeHtmlTags(item['data'][0]['album']['name'] as String),
             image: MetasImage.network(item['data'][0]['image'][2]['link']),
             extra: item['data'][0]),
       );
@@ -145,9 +147,9 @@ class _BottomSongPlayerState extends State<BottomSongPlayer> {
         item['data'][0]['downloadUrl'][4]['link'],
         metas: Metas(
             id: item['data'][0]['id'],
-            title: item['data'][0]['name'],
-            artist: item['data'][0]['primaryArtists'],
-            album: item['data'][0]['album']['name'],
+            title: htmlFormatter.removeHtmlTags(item['data'][0]['name'] as String),
+            artist: htmlFormatter.removeHtmlTags(item['data'][0]['primaryArtists'] as String),
+            album: htmlFormatter.removeHtmlTags(item['data'][0]['album']['name'] as String),
             image: MetasImage.network(item['data'][0]['image'][2]['link']),
             extra: item['data'][0]),
       );

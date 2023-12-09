@@ -1,6 +1,7 @@
 
 import 'package:flutter_file_downloader/flutter_file_downloader.dart';
 // import 'package:path_provider/path_provider.dart';
+import 'package:SoundDash/services/formatter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:floating_snackbar/floating_snackbar.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +14,7 @@ class Download {
     try {
       var status = await Permission.storage.request();
       if (status.isGranted) {
-        String title = songData['name'];
+        String title = htmlFormatter.removeHtmlTags(songData['name']);
         FileDownloader.downloadFile(
             url: songData['downloadUrl'][4]['link'],
             name: '$title.mp3',

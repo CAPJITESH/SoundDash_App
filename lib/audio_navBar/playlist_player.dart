@@ -7,6 +7,10 @@ import 'package:SoundDash/services/database.dart';
 import 'package:marquee/marquee.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:palette_generator/palette_generator.dart';
+import 'package:SoundDash/services/formatter.dart';
+
+
+
 
 class PlaylistPlayer extends StatefulWidget {
   final List<dynamic> playlistData;
@@ -93,9 +97,9 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
               ['link'], // Assuming downloadUrl is a list
           metas: Metas(
               id: widget.playlistData[i]['id'],
-              title: widget.playlistData[i]['name'],
-              artist: widget.playlistData[i]['primaryArtists'],
-              album: widget.playlistData[i]['album']['name'],
+              title: htmlFormatter.removeHtmlTags(widget.playlistData[i]['name'] as String),
+              artist: htmlFormatter.removeHtmlTags(widget.playlistData[i]['primaryArtists'] as String),
+              album: htmlFormatter.removeHtmlTags(widget.playlistData[i]['album']['name'] as String),
               image: MetasImage.network(
                   widget.playlistData[i]['image'][2]['link']),
               extra: widget.playlistData[i]),
@@ -111,9 +115,9 @@ class _PlaylistPlayerState extends State<PlaylistPlayer> {
                 ['link'], // Assuming downloadUrl is a list
             metas: Metas(
                 id: widget.playlistData[i]['id'],
-                title: widget.playlistData[i]['name'],
-                artist: widget.playlistData[i]['primaryArtists'],
-                album: widget.playlistData[i]['album']['name'],
+                title: htmlFormatter.removeHtmlTags(widget.playlistData[i]['name'] as String),
+                artist: htmlFormatter.removeHtmlTags(widget.playlistData[i]['primaryArtists'] as String),
+                album: htmlFormatter.removeHtmlTags(widget.playlistData[i]['album']['name'] as String),
                 image: MetasImage.network(
                     widget.playlistData[i]['image'][2]['link']),
                 extra: widget.playlistData[i]),

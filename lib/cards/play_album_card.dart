@@ -1,5 +1,7 @@
 import 'package:SoundDash/services/songs_card_options.dart';
 import 'package:SoundDash/services/selected_song_data.dart';
+import 'package:SoundDash/services/formatter.dart';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -36,12 +38,12 @@ class PlayAlbumCard extends StatelessWidget {
                 height: 100,
               ),
               title: Text(
-                songName,
+                htmlFormatter.removeHtmlTags(songName),
                 overflow: TextOverflow.ellipsis,
                 maxLines: 2,
               ),
               subtitle: Text(
-                artistName,
+                htmlFormatter.removeHtmlTags(artistName),
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
               ),

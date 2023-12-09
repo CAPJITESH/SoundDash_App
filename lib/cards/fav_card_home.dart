@@ -1,5 +1,6 @@
 import 'package:SoundDash/services/selected_song_data.dart';
 import 'package:flutter/material.dart';
+import 'package:SoundDash/services/formatter.dart';
 import 'package:provider/provider.dart';
 
 class FavouriteCard extends StatefulWidget {
@@ -40,7 +41,7 @@ class _FavouriteCardState extends State<FavouriteCard> {
               ),
             ),
             title: Text(
-              widget.favPlaylist[widget.index]['name'],
+              htmlFormatter.removeHtmlTags(widget.favPlaylist[widget.index]['name']),
               style: const TextStyle(fontSize: 15),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,

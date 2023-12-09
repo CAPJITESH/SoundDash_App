@@ -1,5 +1,9 @@
 import 'package:http/http.dart';
 import 'dart:convert';
+import 'package:pointycastle/export.dart';
+import 'package:encrypt/encrypt.dart';
+import 'dart:typed_data';
+import 'package:dart_des/dart_des.dart';
 
 class Api {
   // static Future<Map<String, dynamic>> fetchApiResponse(String endpoint) async {
@@ -79,6 +83,85 @@ class Api {
     }
   }
 
+  static String decryptDES(String encryptedBase64) {
+    String key = '38346591';
+    List<int> encrypted = base64.decode(encryptedBase64);
+    List<int> decrypted;
+
+    if (key.length == 8) {
+      // Use DES
+      List<int> iv = [0, 0, 0, 0, 0, 0, 0, 0];
+      DES desECB = DES(key: key.codeUnits, mode: DESMode.ECB,iv: iv);
+      decrypted = desECB.decrypt(encrypted);
+    } else {
+      throw ArgumentError(
+          'Invalid key length. Key must be 8 or 24 bytes long.');
+    }
+    final link = utf8.decode(decrypted);
+    // final modifiedLink = '$link\_320.mp4';
+    // print(modifiedLink);
+    return link;
+  }
+
+  static Future<Map<String, dynamic>> otherData(String id, String type) async {
+    final endpoint =
+        "https://www.jiosaavn.com/api.php?_format=json&_marker=0&api_version=4&ctx=web6dot0&token=$id&type=$type&__call=webapi.get";
+
+    final response = await get(Uri.parse(endpoint));
+    if (response.statusCode == 200) {
+      final responseBody = json.decode(response.body);
+      print(responseBody);
+      print(type);
+      Map<String, dynamic> temp = formatter(responseBody, type);
+
+      return temp;
+    } else {
+      throw Exception('Failed to fetch API response');
+    }
+  }
+
+  static Map<String, dynamic> formatter(
+      Map<String, dynamic> data, String type) {
+    Map<String, dynamic> temp = {};
+
+    if (type == "show") {
+      temp['title'] = data['show_details']['title'];
+      temp['image'] = data['show_details']['image'];
+
+      // Create a list with three maps containing quality and link keys
+      List<Map<String, dynamic>> tempSongs = List<Map<String, dynamic>>.from(
+        (data['episodes'] as List).map((episode) {
+          return {
+            'id': episode['id'],
+            'name': episode['title'],
+            'primaryArtists': "Unknown",
+            'album': {
+              'name' : "Unknown"
+            },
+            'image': List.generate(
+                3,
+                (index) => {
+                      'quality': '120',
+                      'link': episode['image'], // Replace with the actual URL
+                    }),
+            'downloadUrl': List.generate(
+                5,
+                (index) => {
+                      'quality': '320',
+                      'link': decryptDES(episode['more_info'][
+                          'encrypted_media_url']), // Replace with the actual URL
+                    }),
+            // Add more keys as needed
+          };
+        }),
+      );
+      temp['data'] = {};
+      temp['data']['songs'] = tempSongs;
+    }
+    print(temp);
+    return temp;
+  }
+
   static Future<Map<String, dynamic>> performSearch(String query) async {
     final endpoint =
         "https://www.jiosaavn.com/api.php?_format=json&_marker=0&api_version=4&ctx=web6dot0&__call=autocomplete.get&cc=in&includeMetaTags=2&query=$query";
@@ -141,9 +224,9 @@ class Api {
 
         return lyrics;
       } else {
-        String lyrics =
-            await getMusixMatchLyrics(title: songData['name'], artist: songData['primaryArtists'])
-                as String;
+        String lyrics = await getMusixMatchLyrics(
+            title: songData['name'],
+            artist: songData['primaryArtists']) as String;
         return lyrics;
       }
     } catch (e) {

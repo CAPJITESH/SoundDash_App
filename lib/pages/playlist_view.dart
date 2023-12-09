@@ -19,7 +19,6 @@ class PlaylistView extends StatefulWidget {
 class _PlaylistViewState extends State<PlaylistView> {
   @override
   void initState() {
-    // TODO: implement initState
     extractColor();
     super.initState();
   }
@@ -56,118 +55,134 @@ class _PlaylistViewState extends State<PlaylistView> {
     }
     final selectedSongDataProvider =
         Provider.of<SelectedSongDataProvider>(context, listen: false);
+
+    Future<Map<String, dynamic>> fetchData() async {
+      switch (widget.albumData['type']) {
+        case 'playlist':
+          return Api.getPlaylist(widget.albumData['id']);
+        case 'album':
+          return Api.getAlbum(widget.albumData['perma_url']);
+
+        default:
+          final url = widget.albumData['perma_url'].split('/').last;
+          return Api.otherData(url, widget.albumData['type']);
+      }
+    }
+
     return WillPopScope(
       onWillPop: () async {
-        // Handle the back button press event
         widget.onClose('Return');
-
-        // Return false to prevent the default back button behavior
         return false;
       },
-      child: Container(
-        width: MediaQuery.of(context).size.width,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              extracted_color,
-              Color.fromARGB(255, 28, 15, 25),
-              const Color.fromARGB(255, 10, 1, 20),
-              Colors.black.withOpacity(1),
-            ],
+      child: Stack(
+        children: [
+          Container(
+            padding: const EdgeInsets.only(left: 10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  extracted_color,
+                  Color.fromARGB(255, 28, 15, 25),
+                  const Color.fromARGB(255, 10, 1, 20),
+                  Colors.black.withOpacity(1),
+                ],
+              ),
+            ),
           ),
-        ),
-        child: Column(
-          children: [
-            const SizedBox(
-              height: 40,
-            ),
-            Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                image: DecorationImage(
-                  image: NetworkImage(widget.albumData['image']),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            Text(
-              widget.albumData['title'],
-              style: const TextStyle(fontSize: 25),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(
-              height: 10,
-            ),
-            Text(
-              artistNames,
-              style: const TextStyle(fontSize: 15),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            Expanded(
-              child: FutureBuilder<Map<String, dynamic>>(
-                future: widget.albumData['type'] == 'playlist'
-                    ? Api.getPlaylist(widget.albumData['id'])
-                    : Api.getAlbum(widget.albumData['perma_url']),
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    final responseMap = snapshot.data!;
-                    final songResults = responseMap['data']['songs'];
-
-                    return Column(
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            // print(songResults);
-                            selectedSongDataProvider.startPlaylistSongs(
-                                songResults, 0);
-                          },
-                          icon: const Icon(Icons.play_circle),
-                          iconSize: 50,
-                        ),
-                        Expanded(
-                          child: Container(
-                            height: MediaQuery.of(context).size.height,
-                            width: MediaQuery.of(context).size.width,
-                            child: ListView.separated(
-                              itemCount: songResults.length,
-                              separatorBuilder: (context, index) =>
-                                  const Divider(
-                                color: Colors.grey,
-                                thickness: 1.0,
-                              ),
-                              itemBuilder: (context, index) {
-                                final songData = songResults[index];
-
-                                return PlayAlbumCard(
-                                  index: index,
-                                  songData: songData,
-                                  playlist: songResults,
-                                );
+          SingleChildScrollView(
+            // Wrap with SingleChildScrollView
+            child: Container(
+              width: MediaQuery.of(context).size.width,
+              child: Column(
+                children: [
+                  const SizedBox(
+                    height: 40,
+                  ),
+                  Container(
+                    width: 200,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      image: DecorationImage(
+                        image: NetworkImage(widget.albumData['image']),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  Text(
+                    widget.albumData['title'],
+                    style: const TextStyle(fontSize: 25),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  Text(
+                    artistNames,
+                    style: const TextStyle(fontSize: 15),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  FutureBuilder<Map<String, dynamic>>(
+                    future: fetchData(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        final responseMap = snapshot.data!;
+                        final songResults = responseMap['data']['songs'];
+                        print(songResults);
+                        return Column(
+                          children: [
+                            IconButton(
+                              onPressed: () {
+                                selectedSongDataProvider.startPlaylistSongs(
+                                    songResults, 0);
                               },
+                              icon: const Icon(Icons.play_circle),
+                              iconSize: 50,
                             ),
-                          ),
-                        ),
-                      ],
-                    );
-                  } else if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
-                  } else {
-                    return const CircularProgressIndicator();
-                  }
-                },
+                            Column(
+                              children: List.generate(
+                                songResults.length,
+                                (index) {
+                                  final songData = songResults[index];
+
+                                  return Column(
+                                    children: [
+                                      PlayAlbumCard(
+                                        index: index,
+                                        songData: songData,
+                                        playlist: songResults,
+                                      ),
+                                      if (index < songResults.length - 1)
+                                        const Divider(
+                                          color: Colors.grey,
+                                          thickness: 1.0,
+                                        ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        );
+                      } else if (snapshot.hasError) {
+                        return Text('Error: ${snapshot.error}');
+                      } else {
+                        return const CircularProgressIndicator();
+                      }
+                    },
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
