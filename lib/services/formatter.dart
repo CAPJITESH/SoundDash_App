@@ -7,7 +7,8 @@ class htmlFormatter {
         .replaceAll('&quot;', '"')
         .replaceAll('&apos;', "'")
         .replaceAll("&#039;", "'")
-        .replaceAll(" &#039; ", "'");
+        .replaceAll(" &#039; ", "'")
+        .replaceAll(" &amp;", "&");
     return temp;
   }
 }

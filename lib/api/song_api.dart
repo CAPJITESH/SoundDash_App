@@ -91,7 +91,7 @@ class Api {
     if (key.length == 8) {
       // Use DES
       List<int> iv = [0, 0, 0, 0, 0, 0, 0, 0];
-      DES desECB = DES(key: key.codeUnits, mode: DESMode.ECB,iv: iv);
+      DES desECB = DES(key: key.codeUnits, mode: DESMode.ECB, iv: iv);
       decrypted = desECB.decrypt(encrypted);
     } else {
       throw ArgumentError(
@@ -103,20 +103,47 @@ class Api {
     return link;
   }
 
-  static Future<Map<String, dynamic>> otherData(String id, String type) async {
-    final endpoint =
-        "https://www.jiosaavn.com/api.php?_format=json&_marker=0&api_version=4&ctx=web6dot0&token=$id&type=$type&__call=webapi.get";
+  static Future<Map<String, dynamic>> otherData(
+      String id, String type, String language) async {
+    if (type == 'radio_station') {
+      final endpoint =
+          "https://www.jiosaavn.com/api.php?_format=json&_marker=0&api_version=4&ctx=web6dot0&__call=webradio.createFeaturedStation&name=$id&language=$language";
 
-    final response = await get(Uri.parse(endpoint));
-    if (response.statusCode == 200) {
-      final responseBody = json.decode(response.body);
-      print(responseBody);
-      print(type);
-      Map<String, dynamic> temp = formatter(responseBody, type);
+      final response = await get(Uri.parse(endpoint));
+      if (response.statusCode == 200) {
+        final responseBody = json.decode(response.body);
+        // print(responseBody);
+        // print(type);
+        final stationID = responseBody['stationid'];
+        final res = await get(Uri.parse(
+            "https://www.jiosaavn.com/api.php?_format=json&_marker=0&api_version=4&ctx=web6dot0&__call=webradio.getSong&stationid=$stationID&k=40&next=1"));
 
-      return temp;
+        if (res.statusCode == 200) {
+          final resBody = json.decode(res.body);
+          Map<String, dynamic> temp = formatter(resBody, type);
+
+          return temp;
+        } else {
+          throw Exception('Failed to fetch API response of radio songs');
+        }
+      } else {
+        throw Exception('Failed to fetch API response');
+      }
     } else {
-      throw Exception('Failed to fetch API response');
+      final endpoint =
+          "https://www.jiosaavn.com/api.php?_format=json&_marker=0&api_version=4&ctx=web6dot0&token=$id&type=$type&__call=webapi.get";
+
+      final response = await get(Uri.parse(endpoint));
+      if (response.statusCode == 200) {
+        final responseBody = json.decode(response.body);
+        print(responseBody);
+        print(type);
+        Map<String, dynamic> temp = formatter(responseBody, type);
+
+        return temp;
+      } else {
+        throw Exception('Failed to fetch API response');
+      }
     }
   }
 
@@ -135,9 +162,7 @@ class Api {
             'id': episode['id'],
             'name': episode['title'],
             'primaryArtists': "Unknown",
-            'album': {
-              'name' : "Unknown"
-            },
+            'album': {'name': "Unknown"},
             'image': List.generate(
                 3,
                 (index) => {
@@ -157,8 +182,81 @@ class Api {
       );
       temp['data'] = {};
       temp['data']['songs'] = tempSongs;
+    } else if (type == "mix") {
+      temp['title'] = data['title'];
+      temp['image'] = data['image'];
+
+      // Create a list with three maps containing quality and link keys
+      List<Map<String, dynamic>> tempSongs = List<Map<String, dynamic>>.from(
+        (data['list'] as List).map((episode) {
+          return {
+            'id': episode['id'],
+            'name': episode['title'],
+            'primaryArtists': episode['subtitle'],
+            'album': {'name': episode['more_info']['album']},
+            'image': List.generate(
+                3,
+                (index) => {
+                      'quality': '120',
+                      'link': episode['image'], // Replace with the actual URL
+                    }),
+            'downloadUrl': List.generate(
+                5,
+                (index) => {
+                      'quality': '320',
+                      'link': decryptDES(episode['more_info'][
+                          'encrypted_media_url']), // Replace with the actual URL
+                    }),
+            // Add more keys as needed
+          };
+        }),
+      );
+      temp['data'] = {};
+      temp['data']['songs'] = tempSongs;
+    } else if (type == 'radio_station') {
+      List<Map<String, dynamic>> tempSongs = [];
+
+      for (var e in data.entries) {
+        Map<String, dynamic> t = {};
+        t['id'] = e.value['id'];
+        t['name'] = e.value['title'];
+        String artistNames = '';
+
+        try {
+          if (e.value['more_info'] != null) {
+            if (e.value['more_info']['artistMap'] != null) {
+              e.value['more_info']['artistMap']['artists'].forEach((item) {
+                artistNames += item['name'];
+              });
+            } else {
+              artistNames = e.value['subtitle'];
+            }
+          }
+        } catch (e) {
+          artistNames = " ";
+        }
+        t['primaryArtists'] = artistNames;
+        t['album'] = e.value['more_info']['album'];
+        t['image'] = List.generate(
+            3,
+            (index) => {
+                  'quality': '120',
+                  'link': e.value['image'], // Replace with the actual URL
+                });
+        t['downloadUrl'] = List.generate(
+            5,
+            (index) => {
+                  'quality': '320',
+                  'link': decryptDES(e.value['more_info']
+                      ['encrypted_media_url']), // Replace with the actual URL
+                });
+        tempSongs.add(t);
+      }
+      temp['data'] = {};
+      temp['data']['songs'] = tempSongs;
     }
     print(temp);
+    print("YYYYYYYYYYYYYY");
     return temp;
   }
 

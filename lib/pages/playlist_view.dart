@@ -65,7 +65,7 @@ class _PlaylistViewState extends State<PlaylistView> {
 
         default:
           final url = widget.albumData['perma_url'].split('/').last;
-          return Api.otherData(url, widget.albumData['type']);
+          return Api.otherData(url, widget.albumData['type'],"");
       }
     }
 
